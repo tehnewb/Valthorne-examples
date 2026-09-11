@@ -1,0 +1,136 @@
+plugins { id 'application' }
+
+group = 'io.github.tehnewb.examples'
+version = providers.gradleProperty('valthorneVersion').get()
+description = 'Runnable, documented examples consuming the published Valthorne engine'
+
+repositories { mavenCentral() }
+configurations { javaFormatter }
+dependencies {
+    implementation "io.github.tehnewb:Valthorne:${version}"
+    javaFormatter 'com.google.googlejavaformat:google-java-format:1.36.0:all-deps'
+}
+java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }
+application {
+    mainClass = 'valthorne.examples.launcher.ExampleLauncher'
+    applicationDefaultJvmArgs = ['--enable-native-access=ALL-UNNAMED']
+}
+
+// Select the macOS flag when the distribution runs, independently of its build host.
+tasks.named('startScripts') {
+    doLast {
+        def defaults = 'DEFAULT_JVM_OPTS=\'"--enable-native-access=ALL-UNNAMED"\''
+        def script = unixScript.getText('UTF-8')
+        if (!script.contains(defaults)) throw new GradleException('Unexpected Gradle launcher template')
+        unixScript.setText(script.replace(defaults, defaults + '\nif "$darwin"; then\n    DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XstartOnFirstThread"\nfi'), 'UTF-8')
+        // Native JARs for every target exceed cmd.exe's line limit in long installation paths.
+        def windows = windowsScript.getText('UTF-8')
+        if (!(windows =~ /(?m)^set CLASSPATH=.*$/).find()) throw new GradleException('Missing Windows classpath')
+        windowsScript.setText(windows.replaceFirst(/(?m)^set CLASSPATH=.*$/, java.util.regex.Matcher.quoteReplacement('set CLASSPATH=%APP_HOME%\\lib\\*')), 'UTF-8')
+    }
+}
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 25
+}
+tasks.withType(JavaExec).configureEach {
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+    workingDir = rootDir
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+    if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('mac')) jvmArgs '-XstartOnFirstThread'
+}
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+tasks.named('javadoc') {
+    options.encoding = 'UTF-8'
+    options.noTimestamp = true
+    options.memberLevel = JavadocMemberLevel.PRIVATE
+    options.addStringOption('Xdoclint:all,-missing', '-quiet')
+    failOnError = true
+}
+
+// The task ID and launcher ID remain stable even when implementation packages change.
+def demos = [runMinimalExample: 'starter', run3DExample: 'scene',
+             runPhysics3DExample: 'physics', runLighting2DExample: 'lighting2d',
+             runUIShowcase: 'ui', runAudioStudio: 'audio', runLightingStudio: 'lighting-studio',
+             runPathTracingExample: 'path-tracing', runPhysicsStudio: 'physics-studio', runFpsArena: 'fps']
+demos.each { taskName, exampleId ->
+    tasks.register(taskName, JavaExec) {
+        group = 'examples'
+        description = "Launches ${exampleId}; use --args=\"--help\" for controls and options."
+        classpath = sourceSets.main.runtimeClasspath
+        mainClass = application.mainClass
+        // --args replaces normal arguments; prepend the ID only after Gradle has parsed it.
+        doFirst { setArgs([exampleId] + new ArrayList(args)) }
+    }
+}
+tasks.register('listExamples', JavaExec) {
+    group = 'examples'
+    description = 'Lists demos and platform requirements without opening a window.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = application.mainClass
+    args '--list'
+}
+
+def validators = [verifyGalleryAssets: 'assets.PhysicsStudioModels',
+                  verifyCombatAssets: 'fps.FpsCombatModels',
+                  verifyEnvironmentAssets: 'fps.FpsEnvironmentModels',
+                  verifyLightRig: 'lightrig.StudioLightRigValidation',
+                  verifyFpsArena: 'fps.FpsArenaValidation']
+validators.each { taskName, entryPoint ->
+    tasks.register(taskName, JavaExec) {
+        group = 'verification'
+        description = "Runs the display-free ${taskName} checks against packaged resources."
+        classpath = sourceSets.main.runtimeClasspath
+        mainClass = "valthorne.examples.${entryPoint}"
+    }
+}
+tasks.register('verifyAssets') { dependsOn 'verifyGalleryAssets', 'verifyCombatAssets', 'verifyEnvironmentAssets' }
+tasks.register('verifyPhysicsStudio') { dependsOn 'verifyGalleryAssets', 'verifyLightRig' }
+
+['formatJava', 'checkFormat'].each { taskName ->
+    tasks.register(taskName, JavaExec) {
+        group = taskName == 'formatJava' ? 'formatting' : 'verification'
+        description = taskName == 'formatJava' ? 'Formats Java sources with the pinned AOSP formatter.' : 'Rejects Java formatting drift.'
+        classpath = configurations.javaFormatter
+        mainClass = 'com.google.googlejavaformat.java.Main'
+        ['api', 'file', 'parser', 'tree', 'util', 'code'].each { compilerPackage ->
+            jvmArgs "--add-exports=jdk.compiler/com.sun.tools.javac.${compilerPackage}=ALL-UNNAMED"
+        }
+        doFirst {
+            args '--aosp'
+            args taskName == 'formatJava' ? '--replace' : '--dry-run'
+            if (taskName == 'checkFormat') args '--set-exit-if-changed'
+            args fileTree('src/main/java').matching { include '**/*.java' }.files.sort()
+            args fileTree('tools').matching { include '*.java' }.files.sort()
+        }
+    }
+}
+tasks.named('check') { dependsOn 'verifyAssets', 'verifyLightRig', 'verifyFpsArena', 'checkFormat' }
+tasks.named('build') { dependsOn 'javadoc' }
+
+['verifySourceDocumentation': 'DocumentationCheck', 'verifyRepositoryFiles': 'RepositoryCheck'].each { taskName, sourceTool ->
+    tasks.register(taskName, Exec) {
+        group = 'verification'
+        description = "Runs the JDK-only ${sourceTool} repository check."
+        workingDir = rootDir
+        def javaTool = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+        commandLine javaTool.get().executablePath.asFile.absolutePath, file("tools/${sourceTool}.java").absolutePath
+    }
+}
+tasks.register('verifyDocumentation') { dependsOn 'verifySourceDocumentation', 'verifyRepositoryFiles' }
+tasks.named('check') { dependsOn 'verifyDocumentation' }
+
+// Sources and assets form an optional download; no Maven publication is configured here.
+tasks.register('examplesZip', Zip) {
+    group = 'distribution'
+    description = 'Packages the standalone example project, excluding local output and tests.'
+    archiveFileName = "Valthorne-examples-${version}.zip"
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    from(rootDir) {
+        include 'src/main/**', 'docs/**', 'tools/**', 'gradle/**', 'gradlew', 'gradlew.bat',
+                '*.gradle', 'gradle.properties', '*.md', 'LICENSE', '.gitignore', '.gitattributes', '.editorconfig'
+    }
+}

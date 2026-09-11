@@ -1,0 +1,6 @@
+# CC0 model adapted from https://polyhaven.com/a/modular_fire_escape
+newmtl surface_0
+Kd 1 1 1
+d 1
+map_Kd modular_fire_escape_01_diff_1k.jpg
+

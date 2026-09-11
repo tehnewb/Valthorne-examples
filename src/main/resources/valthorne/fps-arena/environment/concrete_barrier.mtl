@@ -1,0 +1,6 @@
+# CC0 model adapted from https://polyhaven.com/a/concrete_road_barrier_02
+newmtl surface_0
+Kd 1 1 1
+d 1
+map_Kd concrete_road_barrier_02_diff_1k.jpg
+

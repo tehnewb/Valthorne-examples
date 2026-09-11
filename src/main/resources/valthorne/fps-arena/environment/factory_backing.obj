@@ -1,0 +1,35 @@
+# CC0 model adapted from https://polyhaven.com/a/modular_factory_facade
+# Coordinates baked to Z-up; see SOURCES.json for source nodes and transforms.
+mtllib factory_backing.mtl
+o wall_standard_standard_01
+v -2 -2 0.08
+v 2 -2 0.08
+v 2 2 0.08
+v -2 2 0.08
+vt 1.7881393e-07 1.0000002
+vt 0.99999994 1
+vt 0.99999964 1.1920929e-07
+vt -5.9604645e-08 3.5762787e-07
+vn 0 0 1
+vn 0 0 1
+vn 0 0 1
+vn 0 0 1
+usemtl surface_4
+f 1/1/1 2/2/2 3/3/3
+f 1/1/1 3/3/3 4/4/4
+o wall_standard_standard_01
+v -2 -2 0
+v 2 -2 0
+v 2 2 0
+v -2 2 0
+vt 1.7881393e-07 1.0000002
+vt 0.99999994 1
+vt 0.99999964 1.1920929e-07
+vt -5.9604645e-08 3.5762787e-07
+vn -0 -0 -1
+vn -0 -0 -1
+vn -0 -0 -1
+vn -0 -0 -1
+usemtl surface_4
+f 5/5/5 7/7/7 6/6/6
+f 5/5/5 8/8/8 7/7/7

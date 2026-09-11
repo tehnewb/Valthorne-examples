@@ -1,0 +1,27 @@
+.gradle/
+build/
+out/
+bin/
+.idea/
+.vscode/
+*.iml
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.log
+hs_err_pid*
+replay_pid*
+*.hprof
+*.jfr
+.env
+.env.*
+*.local.properties
+*.key
+*.keystore
+*.asc
+.DS_Store
+Thumbs.db
+Desktop.ini
+__pycache__/
+# Validation is supplied as executable examples and build tools, without test folders.
+src/test/

@@ -1,0 +1,6 @@
+# CC0 source: https://opengameart.org/content/m4a1-assault-rifle
+newmtl m4a1_surface
+Kd 1 1 1
+d 1
+Ns 32
+map_Kd m4a1_base_color.png

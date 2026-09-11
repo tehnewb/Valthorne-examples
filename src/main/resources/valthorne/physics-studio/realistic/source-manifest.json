@@ -1,0 +1,227 @@
+{
+  "license": "CC0-1.0",
+  "license_url": "https://polyhaven.com/license",
+  "retrieved": "2026-09-09",
+  "conversion": {
+    "coordinates": "Y-up, source meters; glTF node transforms baked",
+    "uv": "OBJ V = 1 - glTF V; source JPEG unchanged",
+    "crate_variant": "closed _a nodes only; open _b nodes excluded",
+    "rendered_maps": "2K diffuse/basecolor only; source normal and roughness maps omitted"
+  },
+  "models": [
+    {
+      "id": "antique_ceramic_vase_01",
+      "name": "Antique Ceramic Vase 01",
+      "author": "James Ray Cock",
+      "page": "https://polyhaven.com/a/antique_ceramic_vase_01",
+      "api": "https://api.polyhaven.com/files/antique_ceramic_vase_01",
+      "source_files": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/antique_ceramic_vase_01/antique_ceramic_vase_01_2k.gltf",
+          "bytes": 2789,
+          "md5": "02bda74aa264975a1c8747380ab4c19a",
+          "sha256": "08c2254b19143c7b2896ff484104b5c7c9fdc67b94550427abe21d397ac01221"
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/antique_ceramic_vase_01/antique_ceramic_vase_01.bin",
+          "bytes": 217216,
+          "md5": "0758bc04ce9826b1ae61c931aed19715",
+          "sha256": "ff3224b67b0a20e5033e651c405382fbfcc26ceb034f8dc59065ea0e0b6b708e"
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/antique_ceramic_vase_01/antique_ceramic_vase_01_diff_2k.jpg",
+          "bytes": 590090,
+          "md5": "f6de0d6c8568277054197d8239c3a6e5",
+          "sha256": "e93f8729d3d7271c85ef11833f5027aff3757af876638a2ac4248519a8211517"
+        }
+      ],
+      "packaged_files": [
+        {
+          "file": "antique_ceramic_vase_01.mtl",
+          "bytes": 142,
+          "sha256": "2066b8d69f3dce0c770ab106bf36e4750a7228f7e9ecb8fc1e0b0bbecf0eb68e"
+        },
+        {
+          "file": "antique_ceramic_vase_01.obj",
+          "bytes": 966740,
+          "sha256": "20ed256201b4c94618a59b2094b8867889180a62516f138848ca74cea70d2135"
+        },
+        {
+          "file": "antique_ceramic_vase_01_diff_2k.jpg",
+          "bytes": 590090,
+          "sha256": "e93f8729d3d7271c85ef11833f5027aff3757af876638a2ac4248519a8211517"
+        }
+      ],
+      "validation": {
+        "id": "antique_ceramic_vase_01",
+        "vertices": 5024,
+        "triangles": 9408,
+        "bounds_y_up": [
+          [
+            -0.12751498818397522,
+            -0.00011807833652710542,
+            -0.12751497328281403
+          ],
+          [
+            0.12751497328281403,
+            0.4394349753856659,
+            0.12751497328281403
+          ]
+        ],
+        "nodes": [
+          "antique_ceramic_vase_01"
+        ],
+        "negative_winding_vs_normals": 0,
+        "degenerate_faces": 0,
+        "texture_resolution": [
+          2048,
+          2048
+        ]
+      }
+    },
+    {
+      "id": "old_military_crate",
+      "name": "Old Military Crate",
+      "author": "Jack Mava",
+      "page": "https://polyhaven.com/a/old_military_crate",
+      "api": "https://api.polyhaven.com/files/old_military_crate",
+      "source_files": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/old_military_crate/old_military_crate_2k.gltf",
+          "bytes": 10126,
+          "md5": "38a0dbf05a8086e54978fa5f3f45ba49",
+          "sha256": "ef7f99f44965ba06f96f9e3269dddd0f7f5e945f4b375d5693d5bb038074d1c5"
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/old_military_crate/old_military_crate_diff_2k.jpg",
+          "bytes": 2968985,
+          "md5": "141e3163cfd56a2654440a4f4fac9bfa",
+          "sha256": "ebc666e42a5d276195f2589243e2c202f3cd166216c96e7d6a776feada85002d"
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/old_military_crate/old_military_crate.bin",
+          "bytes": 329004,
+          "md5": "4aa204ebcc401c38206677a808aebea6",
+          "sha256": "80eb5ad690aaa6f4f401df0f8e323666bf8f3f9943c7cb703eb37002f5084ce1"
+        }
+      ],
+      "packaged_files": [
+        {
+          "file": "old_military_crate.mtl",
+          "bytes": 132,
+          "sha256": "d66bb0f60c98add740a17e73c3e2e27763e6fe85946a3e366bcdded5e671e7c6"
+        },
+        {
+          "file": "old_military_crate.obj",
+          "bytes": 1318508,
+          "sha256": "99a25d339bf42f2ce71462b6ea7d024b64e226bafde2ad85d1bbbdd5e90275eb"
+        },
+        {
+          "file": "old_military_crate_diff_2k.jpg",
+          "bytes": 2968985,
+          "sha256": "ebc666e42a5d276195f2589243e2c202f3cd166216c96e7d6a776feada85002d"
+        }
+      ],
+      "validation": {
+        "id": "old_military_crate",
+        "vertices": 8317,
+        "triangles": 10476,
+        "bounds_y_up": [
+          [
+            -0.9130357205867767,
+            -1.4290213584899902e-05,
+            -0.2290036678314209
+          ],
+          [
+            -0.09765002131462097,
+            0.3009185492992401,
+            0.30862098932266235
+          ]
+        ],
+        "nodes": [
+          "old_military_crate_lid_a",
+          "old_military_crate_loop_a",
+          "old_military_crate_latch_a",
+          "old_military_crate_cloth_a",
+          "old_military_crate_a"
+        ],
+        "negative_winding_vs_normals": 1,
+        "degenerate_faces": 0,
+        "texture_resolution": [
+          2048,
+          2048
+        ]
+      }
+    },
+    {
+      "id": "marble_bust_01",
+      "name": "Marble Bust 01",
+      "author": "Rico Cilliers",
+      "page": "https://polyhaven.com/a/marble_bust_01",
+      "api": "https://api.polyhaven.com/files/marble_bust_01",
+      "source_files": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/marble_bust_01/marble_bust_01_2k.gltf",
+          "bytes": 2793,
+          "md5": "a25d7fdc8f9d464d40f5025c4993cda3",
+          "sha256": "40ca513e2ef617b0aaecc08653abc0a0fe18db30e04608d061ce96be7d78e7c6"
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/marble_bust_01/marble_bust_01.bin",
+          "bytes": 416608,
+          "md5": "1c62c1189a0e8985618c1662e1bd25a3",
+          "sha256": "0bb757c1bd00bfe42005c84e7f76df98ce04a532e595a2ddda8a0335cd959e33"
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/marble_bust_01/marble_bust_01_diff_2k.jpg",
+          "bytes": 524864,
+          "md5": "2aa08c108bd20d958c8ef5abc62cc42d",
+          "sha256": "06b3a65f41942399f78a38a69dc4448c1c84b59f97390ace1fa4711baaef62df"
+        }
+      ],
+      "packaged_files": [
+        {
+          "file": "marble_bust_01.mtl",
+          "bytes": 124,
+          "sha256": "dca76e9669aa9885d5eeda62bf7d346fc0128ab5508b43ebd01c195a4fca97d4"
+        },
+        {
+          "file": "marble_bust_01.obj",
+          "bytes": 1856266,
+          "sha256": "afe3b769ff2555228c078e5546dfc62cb0315d20fd766a5f2013f5b018fb8bf3"
+        },
+        {
+          "file": "marble_bust_01_diff_2k.jpg",
+          "bytes": 524864,
+          "sha256": "06b3a65f41942399f78a38a69dc4448c1c84b59f97390ace1fa4711baaef62df"
+        }
+      ],
+      "validation": {
+        "id": "marble_bust_01",
+        "vertices": 9746,
+        "triangles": 17456,
+        "bounds_y_up": [
+          [
+            -0.12288019061088562,
+            7.62939453125e-05,
+            -0.1445964276790619
+          ],
+          [
+            0.14886942505836487,
+            0.5150194987654686,
+            0.1551172435283661
+          ]
+        ],
+        "nodes": [
+          "marble_bust_01"
+        ],
+        "negative_winding_vs_normals": 0,
+        "degenerate_faces": 0,
+        "texture_resolution": [
+          2048,
+          2048
+        ]
+      }
+    }
+  ]
+}

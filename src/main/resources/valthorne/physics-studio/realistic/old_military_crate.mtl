@@ -1,0 +1,7 @@
+# CC0 source: https://polyhaven.com/a/old_military_crate
+newmtl surface_0
+Kd 1 1 1
+d 1
+Ns 32
+map_Kd old_military_crate_diff_2k.jpg
+

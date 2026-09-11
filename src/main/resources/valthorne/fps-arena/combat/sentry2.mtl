@@ -1,0 +1,6 @@
+# CC0 source: https://opengameart.org/content/sentry-2-sentry-bot-mark-2
+newmtl sentry2_surface
+Kd 1 1 1
+d 1
+Ns 32
+map_Kd sentry2_diffuse.jpg

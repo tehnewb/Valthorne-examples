@@ -1,0 +1,15 @@
+* text=auto eol=lf
+*.java text eol=lf
+*.gradle text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.png binary
+*.jpg binary
+*.obj text eol=lf
+*.mtl text eol=lf
+# Preserve imported resources byte-for-byte so their provenance hashes remain valid.
+src/main/resources/** -text -whitespace

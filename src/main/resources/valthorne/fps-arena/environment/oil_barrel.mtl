@@ -1,0 +1,6 @@
+# CC0 model adapted from https://polyhaven.com/a/Barrel_01
+newmtl surface_0
+Kd 1 1 1
+d 1
+map_Kd Barrel_01_explosive_diff_1k.jpg
+

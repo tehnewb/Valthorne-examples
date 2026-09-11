@@ -1,0 +1,84 @@
+name: Examples CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: examples-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and native checks / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/wrapper-validation@v4
+      - name: Build, document and validate the published-engine examples
+        shell: bash
+        run: bash ./gradlew build listExamples examplesZip installDist --console=plain --stacktrace
+      - name: Check installed Unix launcher
+        if: runner.os != 'Windows'
+        run: build/install/Valthorne-examples/bin/Valthorne-examples --list
+      - name: Check installed Windows launcher
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./build/install/Valthorne-examples/bin/Valthorne-examples.bat --list
+      - name: Retain reference and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: examples-${{ matrix.os }}
+          path: |
+            build/reports/
+            build/docs/javadoc/
+          if-no-files-found: ignore
+
+  graphics:
+    name: Portable demos / Linux Mesa
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      LIBGL_ALWAYS_SOFTWARE: 'true'
+      ALSOFT_DRIVERS: 'null'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install software graphics and desktop dependencies
+        run: sudo apt-get update && sudo apt-get install -y xvfb xauth libgl1-mesa-dri libglx-mesa0 libxrandr2 libxinerama1 libxcursor1 libxi6 fonts-dejavu-core
+      - name: Run portable graphical smoke checks
+        shell: bash
+        run: |
+          for demo in runMinimalExample run3DExample runPhysics3DExample runLighting2DExample runUIShowcase runAudioStudio; do
+            xvfb-run -a bash ./gradlew "$demo" --args="--smoke" --console=plain --stacktrace
+          done
+      - name: Retain captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-demo-captures
+          path: |
+            build/captures/
+            build/ui-showcase/
+            build/audio-studio/
+          if-no-files-found: ignore
