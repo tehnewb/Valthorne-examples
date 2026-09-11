@@ -35,11 +35,23 @@ jobs:
         run: bash ./gradlew build listExamples examplesZip installDist --console=plain --stacktrace
       - name: Check installed Unix launcher
         if: runner.os != 'Windows'
-        run: build/install/Valthorne-examples/bin/Valthorne-examples --list
+        run: |
+          build/install/Valthorne-examples/bin/Valthorne-examples --list
+          for launcher in build/install/Valthorne-examples/*.sh; do
+            "$launcher" --help
+          done
       - name: Check installed Windows launcher
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./build/install/Valthorne-examples/bin/Valthorne-examples.bat --list
+        run: |
+          ./build/install/Valthorne-examples/bin/Valthorne-examples.bat --list
+          if ($LASTEXITCODE -ne 0) { throw 'Catalog failed' }
+          foreach ($launcher in Get-ChildItem build/install/Valthorne-examples/*.bat) {
+            & $launcher.FullName --help
+            if ($LASTEXITCODE -ne 0) { throw "Launcher failed: $launcher" }
+          }
+      - name: Check Java-only connection diagnostic
+        run: java tools/JavaLoopbackCheck.java
       - name: Retain reference and reports
         if: always()
         uses: actions/upload-artifact@v4

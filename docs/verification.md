@@ -55,6 +55,25 @@ resolution, revision and power state belong with every published result.
 
 ## Release download check
 
+`examplesVersion` versions this collection and its downloads independently of
+`valthorneVersion`, the Maven Central engine dependency. Examples 2.0.1 still use
+Valthorne 2.0.0.
+
+`distZip` produces the direct launch distribution with one `.bat` and `.sh` per
+demo. `examplesZip` produces source in a different file; never overwrite one with
+the other. To make the Windows download, obtain the runtime pinned in
+[java-runtime.properties](../distribution/java-runtime.properties), verify its
+SHA-256 before extracting, then run `windowsDesktopZip` with
+`-PwindowsRuntimeHome=<absolute-path-to-extracted-jre>` on the build machine.
+Preserve the complete runtime including `legal/`, and publish its matching upstream
+source archive alongside the desktop ZIP. Gradle is only used by maintainers here.
+
+Extract the desktop ZIP outside the checkout, set `JAVA_HOME` to a nonexistent
+directory and remove Java from `PATH` for the verification process, then run every
+demo's `.bat --smoke`. All ten must use the bundled runtime without Gradle or a
+dependency download. Restore the caller's environment afterward. Check an ordinary
+double-click launch as well; captures and saves must remain inside the distribution.
+
 Build `examplesZip`, extract it outside this checkout, then run `build` and at least
 the starter smoke on a supported host. The extracted project must resolve Valthorne
 from Central and include all asset notices. Publish the ZIP with its SHA-256 checksum;

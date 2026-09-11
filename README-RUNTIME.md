@@ -1,17 +1,46 @@
-# Valthorne examples — prebuilt runtime
+# Run Valthorne examples
 
 This download includes compiled examples, assets, native libraries and launcher
-scripts. **Gradle and an engine source checkout are not required.** Supply a
-64-bit Java 25 runtime and a compatible graphics driver. Set `JAVA_HOME` to Java 25
-or make Java 25 available on `PATH`.
+scripts. **No example needs Gradle to run.**
+
+## Windows: extract and double-click
+
+Download `Valthorne-examples-windows-x64-2.0.1.zip` and extract the whole archive to
+a writable folder. Java is included; no Java installation or environment setup is
+needed. Open the extracted folder and double-click a demo:
+
+| Launch file | Example |
+| --- | --- |
+| `starter.bat` | Application starter |
+| `scene.bat` | 3D scene |
+| `physics.bat` | Physics playground |
+| `lighting2d.bat` | 2D lighting |
+| `ui.bat` | UI gallery |
+| `audio.bat` | Audio studio |
+| `lighting-studio.bat` | Lighting studio |
+| `path-tracing.bat` | Path tracing |
+| `physics-studio.bat` | Physics studio |
+| `fps.bat` | FPS arena |
+
+Keep `runtime/`, `lib/` and `bin/` in the extracted folder. The launch files use
+the bundled Java even if another Java installation is configured on the computer.
+They create captures/saves under that folder's `build/`. If a double-click launch
+fails, its console stays open so the error can be read. Compatible graphics drivers
+are still required; FPS and the advanced studios need OpenGL 4.3 on Windows x64.
+
+## Optional commands and other platforms
+
+The smaller `Valthorne-examples-runtime-2.0.1.zip` supplies the same examples and
+launchers without bundled Java. For that archive, supply Java 25 through `JAVA_HOME`
+or `PATH`. Linux/macOS users can run `./scene.sh` or another supported demo's `.sh`
+file. macOS cannot run OpenGL 4.3 examples or the Windows Filament backend.
 
 Extract the complete archive to a writable folder. Open PowerShell in the extracted
-`Valthorne-examples-runtime-2.0.0` directory on Windows (or the `installDist` root
-when building locally):
+distribution directory on Windows:
 
 ```powershell
-.\bin\Valthorne-examples.bat fps --smoke
-.\bin\Valthorne-examples.bat fps
+.\fps.bat --smoke
+.\fps.bat
 ```
 
 The first command runs the bounded FPS smoke check and exits. The second opens the
@@ -23,6 +52,11 @@ Use `--list` to see all demos, or `fps --help` for options. On Linux/macOS use
 sets macOS's first-thread flag automatically. Keep the entire `lib/` folder beside
 `bin/`; this distribution supplies dependencies rather than downloading them.
 Captures and saves are written under `build/` relative to the current directory.
+
+The bundled Eclipse Temurin 25.0.4.1+1 runtime is unmodified. Its license files
+are under `runtime/legal/`; its upstream package, checksum and source location are
+recorded in `java-runtime.properties`. Matching OpenJDK source is also available
+beside the desktop download on the release page.
 
 Source and walkthroughs: [Valthorne examples](https://github.com/tehnewb/Valthorne-examples).
 See [platform and Gradle startup troubleshooting](https://github.com/tehnewb/Valthorne-examples/blob/main/docs/platforms.md).

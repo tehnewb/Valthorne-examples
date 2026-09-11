@@ -16,10 +16,13 @@ vary by example; see the catalog below.
 
 ## Start here
 
-To run without building, download the **runtime ZIP** from
-[releases](https://github.com/tehnewb/Valthorne-examples/releases/latest) and follow
-[the runtime instructions](README-RUNTIME.md). It includes dependencies and needs
-Java 25, but does not invoke Gradle.
+Download the **Windows x64 ZIP** from
+[releases](https://github.com/tehnewb/Valthorne-examples/releases/latest), extract it,
+and double-click `fps.bat`, `scene.bat`, or any of the other eight demos.
+**Java is bundled. Gradle is not needed to run any example.**
+See [launch files and other platforms](README-RUNTIME.md).
+
+## Build or edit the examples
 
 Install JDK 25, clone this repository, and run:
 

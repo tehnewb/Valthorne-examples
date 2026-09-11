@@ -4,7 +4,14 @@ Study a complete raster composition: seeded procedural meshes, hierarchical tran
 
 **Requires:** OpenGL 3.3. See [platform support](platforms.md).
 
-## Run
+## Run without Gradle
+
+Extract the [Windows desktop download](https://github.com/tehnewb/Valthorne-examples/releases/latest)
+and double-click `scene.bat`. Java and dependencies are included. To run its smoke
+check, open PowerShell in the extracted folder and use `.\scene.bat --smoke`.
+See [runtime instructions](../README-RUNTIME.md) for other platforms and launch options.
+
+## Build and run from source
 
 ```sh
 ./gradlew run3DExample

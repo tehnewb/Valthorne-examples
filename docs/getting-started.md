@@ -1,5 +1,12 @@
 # Run your first example
 
+To play without a development environment, download the **Windows x64 ZIP** from
+[releases](https://github.com/tehnewb/Valthorne-examples/releases/latest), extract it,
+and double-click `starter.bat`, `fps.bat`, or another demo. Java and dependencies
+are bundled. All ten examples launch without Gradle. See [runtime instructions](../README-RUNTIME.md).
+
+The remaining sections cover editing/building source and other distribution options.
+
 Use a **64-bit JDK 25** for the supported desktop target. Set `JAVA_HOME` to that JDK
 and select it as the IDE's Gradle JVM. The wrapper uses Gradle 9.3.1; installing
 Gradle separately is unnecessary. The library version is pinned in `gradle.properties`.
@@ -56,11 +63,11 @@ automation and installed distributions.
 
 ## Distribution scripts
 
-The release's `Valthorne-examples-runtime-2.0.0.zip` contains compiled examples and
+The release's `Valthorne-examples-runtime-2.0.1.zip` contains compiled examples and
 dependencies. Extract it and follow [runtime instructions](../README-RUNTIME.md)
 to run without Gradle, including on a machine where Gradle cannot start.
 `./gradlew distZip` builds this runtime ZIP on a working development machine.
-The similarly named `Valthorne-examples-2.0.0.zip` is the source project and requires
+The similarly named `Valthorne-examples-2.0.1.zip` is the source project and requires
 Gradle to compile. The two tasks write distinct files.
 
 `./gradlew installDist` creates `build/install/Valthorne-examples/`. Its `bin/`

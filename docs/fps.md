@@ -4,7 +4,14 @@ The arena combines gameplay and presentation: player movement, a rifle with relo
 
 **Requires:** Windows x64, OpenGL 4.3, Filament and Jolt. See [platform support](platforms.md).
 
-## Run
+## Run without Gradle
+
+Extract the [Windows desktop download](https://github.com/tehnewb/Valthorne-examples/releases/latest)
+and double-click `fps.bat`. Java and dependencies are included. To run its smoke
+check, open PowerShell in the extracted folder and use `.\fps.bat --smoke`.
+See [runtime instructions](../README-RUNTIME.md) for other platforms and launch options.
+
+## Build and run from source
 
 ```sh
 ./gradlew runFpsArena

@@ -1,6 +1,8 @@
 # Platforms and runtime requirements
 
 The examples use Java 25 and the native dependencies supplied by Valthorne 2.0.0.
+The Windows desktop download bundles Java; every demo has a direct launch file.
+Other desktop platforms can use the runtime ZIP with their own Java 25 installation.
 The build resolves the same published engine on Windows, Linux and macOS; a native
 compiler is not required. Rendering depends on the selected demo and driver.
 

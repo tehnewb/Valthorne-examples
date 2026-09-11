@@ -1,13 +1,13 @@
 plugins { id 'application' }
 
 group = 'io.github.tehnewb.examples'
-version = providers.gradleProperty('valthorneVersion').get()
+version = providers.gradleProperty('examplesVersion').get()
 description = 'Runnable, documented examples consuming the published Valthorne engine'
 
 repositories { mavenCentral() }
 configurations { javaFormatter }
 dependencies {
-    implementation "io.github.tehnewb:Valthorne:${version}"
+    implementation "io.github.tehnewb:Valthorne:${providers.gradleProperty('valthorneVersion').get()}"
     javaFormatter 'com.google.googlejavaformat:google-java-format:1.36.0:all-deps'
 }
 java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }
@@ -23,6 +23,7 @@ distributions.main.contents {
     from('LICENSE')
     from('THIRD_PARTY_NOTICES.md')
     from('tools/JavaLoopbackCheck.java') { into 'tools' }
+    from('distribution/java-runtime.properties')
 }
 
 // Select the macOS flag when the distribution runs, independently of its build host.
@@ -34,6 +35,9 @@ tasks.named('startScripts') {
         unixScript.setText(script.replace(defaults, defaults + '\nif "$darwin"; then\n    DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XstartOnFirstThread"\nfi'), 'UTF-8')
         // Native JARs for every target exceed cmd.exe's line limit in long installation paths.
         def windows = windowsScript.getText('UTF-8')
+        def javaLookup = 'if defined JAVA_HOME goto findJavaFromJavaHome'
+        if (!windows.contains(javaLookup)) throw new GradleException('Missing Java lookup')
+        windows = windows.replace(javaLookup, 'if exist "%APP_HOME%\\runtime\\bin\\java.exe" set "JAVA_HOME=%APP_HOME%\\runtime"\r\n' + javaLookup)
         if (!(windows =~ /(?m)^set CLASSPATH=.*$/).find()) throw new GradleException('Missing Windows classpath')
         windowsScript.setText(windows.replaceFirst(/(?m)^set CLASSPATH=.*$/, java.util.regex.Matcher.quoteReplacement('set CLASSPATH=%APP_HOME%\\lib\\*')), 'UTF-8')
     }
@@ -65,6 +69,48 @@ def demos = [runMinimalExample: 'starter', run3DExample: 'scene',
              runPhysics3DExample: 'physics', runLighting2DExample: 'lighting2d',
              runUIShowcase: 'ui', runAudioStudio: 'audio', runLightingStudio: 'lighting-studio',
              runPathTracingExample: 'path-tracing', runPhysicsStudio: 'physics-studio', runFpsArena: 'fps']
+
+def demoLaunchers = tasks.register('generateDemoLaunchers') {
+    description = 'Creates a direct launch file for every example; these never invoke Gradle.'
+    inputs.files('distribution/launch-demo.bat', 'distribution/launch-demo.sh')
+    inputs.property('demoIds', demos.values().toList())
+    def launcherDirectory = layout.buildDirectory.dir('generated/demo-launchers')
+    outputs.dir(launcherDirectory)
+    doLast {
+        def directory = launcherDirectory.get().asFile
+        directory.mkdirs()
+        demos.values().each { id ->
+            ['bat', 'sh'].each { extension ->
+                def template = file("distribution/launch-demo.${extension}").getText('UTF-8')
+                new File(directory, "${id}.${extension}").setText(template.replace('@DEMO_ID@', id), 'UTF-8')
+            }
+        }
+    }
+}
+distributions.main.contents.from(demoLaunchers) {
+    filePermissions { unix('rwxr-xr-x') }
+}
+
+tasks.register('windowsDesktopZip', Zip) {
+    group = 'distribution'
+    description = 'Packages all ten demos and a supplied Windows x64 Java 25 runtime.'
+    dependsOn 'installDist'
+    archiveFileName = "Valthorne-examples-windows-x64-${version}.zip"
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    def runtimeHome = providers.gradleProperty('windowsRuntimeHome')
+    from(tasks.named('installDist')) { into "Valthorne-examples-windows-x64-${version}" }
+    from({ file(runtimeHome.get()) }) { into "Valthorne-examples-windows-x64-${version}/runtime" }
+    doFirst {
+        def runtime = file(runtimeHome.get())
+        if (!new File(runtime, 'bin/java.exe').isFile() || !new File(runtime, 'legal').isDirectory()) {
+            throw new GradleException('windowsRuntimeHome must contain a complete Windows Java 25 runtime with its legal notices')
+        }
+        def releaseInfo = new File(runtime, 'release').getText('UTF-8')
+        if (!releaseInfo.contains('JAVA_VERSION="25.') || !releaseInfo.contains('OS_ARCH="x86_64"')) {
+            throw new GradleException('The desktop package requires Windows x64 Java 25')
+        }
+    }
+}
 demos.each { taskName, exampleId ->
     tasks.register(taskName, JavaExec) {
         group = 'examples'
@@ -139,7 +185,7 @@ tasks.register('examplesZip', Zip) {
     archiveFileName = "Valthorne-examples-${version}.zip"
     destinationDirectory = layout.buildDirectory.dir('distributions')
     from(rootDir) {
-        include 'src/main/**', 'docs/**', 'tools/**', 'gradle/**', 'gradlew', 'gradlew.bat',
+        include 'src/main/**', 'docs/**', 'tools/**', 'distribution/**', 'gradle/**', 'gradlew', 'gradlew.bat',
                 '*.gradle', 'gradle.properties', '*.md', 'LICENSE', '.gitignore', '.gitattributes', '.editorconfig'
     }
 }
