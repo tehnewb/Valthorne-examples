@@ -16,6 +16,15 @@ application {
     applicationDefaultJvmArgs = ['--enable-native-access=ALL-UNNAMED']
 }
 
+// Keep the executable distribution distinct from examplesZip's source project.
+tasks.named('distZip') { archiveFileName = "Valthorne-examples-runtime-${version}.zip" }
+distributions.main.contents {
+    from('README-RUNTIME.md') { rename { 'README.md' } }
+    from('LICENSE')
+    from('THIRD_PARTY_NOTICES.md')
+    from('tools/JavaLoopbackCheck.java') { into 'tools' }
+}
+
 // Select the macOS flag when the distribution runs, independently of its build host.
 tasks.named('startScripts') {
     doLast {

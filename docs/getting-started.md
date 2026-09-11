@@ -56,6 +56,13 @@ automation and installed distributions.
 
 ## Distribution scripts
 
+The release's `Valthorne-examples-runtime-2.0.0.zip` contains compiled examples and
+dependencies. Extract it and follow [runtime instructions](../README-RUNTIME.md)
+to run without Gradle, including on a machine where Gradle cannot start.
+`./gradlew distZip` builds this runtime ZIP on a working development machine.
+The similarly named `Valthorne-examples-2.0.0.zip` is the source project and requires
+Gradle to compile. The two tasks write distinct files.
+
 `./gradlew installDist` creates `build/install/Valthorne-examples/`. Its `bin/`
 scripts include the required classpath and native-access flags, and select the macOS
 first-thread flag at launch time. Run the script with

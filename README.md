@@ -16,6 +16,11 @@ vary by example; see the catalog below.
 
 ## Start here
 
+To run without building, download the **runtime ZIP** from
+[releases](https://github.com/tehnewb/Valthorne-examples/releases/latest) and follow
+[the runtime instructions](README-RUNTIME.md). It includes dependencies and needs
+Java 25, but does not invoke Gradle.
+
 Install JDK 25, clone this repository, and run:
 
 ```sh
