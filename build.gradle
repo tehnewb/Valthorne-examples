@@ -111,6 +111,53 @@ tasks.register('windowsDesktopZip', Zip) {
         }
     }
 }
+// README links download one demo with its own Start.bat and all runtime dependencies.
+def downloadVersion = version.toString()
+def downloadReadmes = tasks.register('generateDownloadReadmes') {
+    inputs.file('distribution/demo-README.txt')
+    inputs.property('demoIds', demos.values().toList())
+    inputs.property('version', downloadVersion)
+    def outputDirectory = layout.buildDirectory.dir('generated/demo-readmes')
+    outputs.dir(outputDirectory)
+    doLast {
+        demos.values().each { id ->
+            def target = new File(outputDirectory.get().asFile, "${id}/README.txt")
+            target.parentFile.mkdirs()
+            target.setText(file('distribution/demo-README.txt').getText('UTF-8')
+                    .replace('@DEMO_ID@', id).replace('@VERSION@', downloadVersion), 'UTF-8')
+        }
+    }
+}
+def demoDownloads = tasks.register('demoDownloads') {
+    group = 'distribution'
+    description = 'Builds one extract-and-run Windows download per demo.'
+}
+demos.values().each { exampleId ->
+    def downloadTask = tasks.register("${exampleId.replace('-', '')}Download", Zip) {
+        group = 'distribution'
+        description = "Packages ${exampleId} with Start.bat and bundled Java."
+        dependsOn 'windowsDesktopZip', downloadReadmes
+        archiveFileName = "Valthorne-demo-${exampleId}-windows-x64-${version}.zip"
+        destinationDirectory = layout.buildDirectory.dir('distributions/demos')
+        def topDirectory = "Valthorne-${exampleId}"
+        from(tasks.named('installDist')) {
+            include 'bin/**', 'lib/**', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'java-runtime.properties'
+            into topDirectory
+        }
+        from({ file(providers.gradleProperty('windowsRuntimeHome').get()) }) {
+            into "${topDirectory}/runtime"
+        }
+        from(layout.buildDirectory.file("generated/demo-launchers/${exampleId}.bat")) {
+            rename { 'Start.bat' }
+            into topDirectory
+        }
+        from(layout.buildDirectory.file("generated/demo-readmes/${exampleId}/README.txt")) {
+            into topDirectory
+        }
+    }
+    demoDownloads.configure { dependsOn downloadTask }
+}
+
 demos.each { taskName, exampleId ->
     tasks.register(taskName, JavaExec) {
         group = 'examples'

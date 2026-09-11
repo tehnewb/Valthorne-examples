@@ -5,6 +5,13 @@ scripts. **No example needs Gradle to run.**
 
 ## Windows: extract and double-click
 
+Click any demo name in the repository's [download catalog](README.md#choose-a-demo)
+to download that demo. Extract its complete ZIP and double-click **Start.bat**.
+Each individual download includes Java and all required dependencies. To check it
+automatically, run `Start.bat --smoke` in that extracted directory.
+
+The following launch-file table applies to the optional **complete collection**:
+
 Download `Valthorne-examples-windows-x64-2.0.1.zip` and extract the whole archive to
 a writable folder. Java is included; no Java installation or environment setup is
 needed. Open the extracted folder and double-click a demo:

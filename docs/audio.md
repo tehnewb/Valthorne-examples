@@ -6,10 +6,11 @@ The studio synthesizes two quiet tones and starts paused. Edit sound-area covera
 
 ## Run without Gradle
 
-Extract the [Windows desktop download](https://github.com/tehnewb/Valthorne-examples/releases/latest)
-and double-click `audio.bat`. Java and dependencies are included. To run its smoke
-check, open PowerShell in the extracted folder and use `.\audio.bat --smoke`.
-See [runtime instructions](../README-RUNTIME.md) for other platforms and launch options.
+[Download Audio studio for Windows x64](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-audio-windows-x64-2.0.1.zip).
+Extract the whole ZIP and double-click **Start.bat**. Java, assets and dependencies
+are included. To run a bounded smoke check, open PowerShell in the extracted
+folder and use `.\Start.bat --smoke`.
+See [runtime instructions](../README-RUNTIME.md) for other distribution options.
 
 ## Build and run from source
 

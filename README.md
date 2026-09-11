@@ -16,11 +16,30 @@ vary by example; see the catalog below.
 
 ## Start here
 
-Download the **Windows x64 ZIP** from
-[releases](https://github.com/tehnewb/Valthorne-examples/releases/latest), extract it,
-and double-click `fps.bat`, `scene.bat`, or any of the other eight demos.
-**Java is bundled. Gradle is not needed to run any example.**
-See [launch files and other platforms](README-RUNTIME.md).
+Click a demo name below to download its **Windows x64 ZIP**, extract it, and
+double-click **Start.bat**. Each download includes Java, assets and dependencies.
+**No Gradle, Java installation, or repository clone is needed.**
+
+## Choose a demo
+
+| Download for Windows x64 | Walkthrough | Learn | Requirements |
+| --- | --- | --- | --- |
+| [Application starter](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-starter-windows-x64-2.0.1.zip) | [Guide](docs/starter.md) | Lifecycle and resource ownership | OpenGL 3.3 |
+| [3D scene](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-scene-windows-x64-2.0.1.zip) | [Guide](docs/scene.md) | Scene hierarchy, picking, shadows and overlays | OpenGL 3.3 |
+| [Physics playground](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-physics-windows-x64-2.0.1.zip) | [Guide](docs/physics.md) | Bodies, collision and fixed-step simulation | OpenGL 3.3 + Jolt |
+| [2D lighting](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-lighting2d-windows-x64-2.0.1.zip) | [Guide](docs/lighting2d.md) | Lights, occluders and cache invalidation | OpenGL 3.3 |
+| [UI gallery](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-ui-windows-x64-2.0.1.zip) | [Guide](docs/ui.md) | Shared texture/NanoVG UI, tables and virtual lists | OpenGL 3.3 |
+| [Audio studio](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-audio-windows-x64-2.0.1.zip) | [Guide](docs/audio.md) | Sound areas, listener motion and gain | OpenGL 3.3 + audio device |
+| [Lighting studio](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-lighting-studio-windows-x64-2.0.1.zip) | [Guide](docs/lighting-studio.md) | Editable lights, materials and render modes | OpenGL 4.3 |
+| [Path tracing](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-path-tracing-windows-x64-2.0.1.zip) | [Guide](docs/path-tracing.md) | Progressive lighting, glass and area lights | OpenGL 4.3 |
+| [Physics studio](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-physics-studio-windows-x64-2.0.1.zip) | [Guide](docs/physics-studio.md) | Gallery, simulation editor and particles | Windows x64 + OpenGL 4.3 |
+| [FPS arena](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-fps-windows-x64-2.0.1.zip) | [Guide](docs/fps.md) | Gameplay, physics, UI, assets and effects together | Windows x64 + OpenGL 4.3 |
+
+Each package has one **Start.bat** entry point. For an automated check, run
+`Start.bat --smoke` from the extracted folder. Graphics requirements still apply.
+[Platform support](docs/platforms.md) explains the renderer limits.
+[All demos in one ZIP](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-examples-windows-x64-2.0.1.zip)
+and [other platforms](README-RUNTIME.md) are also available.
 
 ## Build or edit the examples
 
@@ -39,25 +58,6 @@ First-time builds download Gradle and Maven dependencies; assets need no separat
 Read [getting started](docs/getting-started.md) for IDE setup, command-line help,
 downloads, and creating your own game. A good learning sequence is **starter → scene
 → physics → UI**, followed by the studios or arena.
-
-## Choose a demo
-
-| Demo | Launch task | Learn | Requirements |
-| --- | --- | --- | --- |
-| [Application starter](docs/starter.md) | `runMinimalExample` | Lifecycle and resource ownership | OpenGL 3.3 |
-| [3D scene](docs/scene.md) | `run3DExample` | Scene hierarchy, picking, shadows and overlays | OpenGL 3.3 |
-| [Physics playground](docs/physics.md) | `runPhysics3DExample` | Bodies, collision and fixed-step simulation | OpenGL 3.3 + Jolt |
-| [2D lighting](docs/lighting2d.md) | `runLighting2DExample` | Lights, occluders and cache invalidation | OpenGL 3.3 |
-| [UI gallery](docs/ui.md) | `runUIShowcase` | Shared texture/NanoVG UI, tables and virtual lists | OpenGL 3.3 |
-| [Audio studio](docs/audio.md) | `runAudioStudio` | Sound areas, listener motion and gain | OpenGL 3.3 + audio device |
-| [Lighting studio](docs/lighting-studio.md) | `runLightingStudio` | Editable lights, materials and render modes | OpenGL 4.3 |
-| [Path tracing](docs/path-tracing.md) | `runPathTracingExample` | Progressive lighting, glass and area lights | OpenGL 4.3 |
-| [Physics studio](docs/physics-studio.md) | `runPhysicsStudio` | Gallery, simulation editor and particles | Windows x64 + OpenGL 4.3 |
-| [FPS arena](docs/fps.md) | `runFpsArena` | Gameplay, physics, UI, assets and effects together | Windows x64 + OpenGL 4.3 |
-
-Every launch task accepts `--args="--help"` and `--args="--smoke"`. Smoke checks are
-bounded graphical runs, not headless tests. [Platform support](docs/platforms.md)
-explains macOS limitations and Filament requirements.
 
 ## Read and extend the code
 

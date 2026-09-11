@@ -6,10 +6,11 @@ Explore five pages covering basic controls, mixed texture/NanoVG nesting, a 10,0
 
 ## Run without Gradle
 
-Extract the [Windows desktop download](https://github.com/tehnewb/Valthorne-examples/releases/latest)
-and double-click `ui.bat`. Java and dependencies are included. To run its smoke
-check, open PowerShell in the extracted folder and use `.\ui.bat --smoke`.
-See [runtime instructions](../README-RUNTIME.md) for other platforms and launch options.
+[Download UI gallery for Windows x64](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-ui-windows-x64-2.0.1.zip).
+Extract the whole ZIP and double-click **Start.bat**. Java, assets and dependencies
+are included. To run a bounded smoke check, open PowerShell in the extracted
+folder and use `.\Start.bat --smoke`.
+See [runtime instructions](../README-RUNTIME.md) for other distribution options.
 
 ## Build and run from source
 

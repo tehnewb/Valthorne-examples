@@ -68,6 +68,12 @@ SHA-256 before extracting, then run `windowsDesktopZip` with
 Preserve the complete runtime including `legal/`, and publish its matching upstream
 source archive alongside the desktop ZIP. Gradle is only used by maintainers here.
 
+`demoDownloads` uses the same `windowsRuntimeHome` to build ten individual ZIPs
+under `build/distributions/demos/`. Each has one root `Start.bat` bound to its demo
+and a short README. Shared runtime/dependency JARs stay intact. Extract and run
+`Start.bat --smoke` from each archive before upload. Publish their SHA-256 inventory
+and verify every direct README download URL against the uploaded asset digest.
+
 Extract the desktop ZIP outside the checkout, set `JAVA_HOME` to a nonexistent
 directory and remove Java from `PATH` for the verification process, then run every
 demo's `.bat --smoke`. All ten must use the bundled runtime without Gradle or a
