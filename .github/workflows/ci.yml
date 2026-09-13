@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+# Keep the development engine reproducible while these APIs await publication.
+env:
+  VALTHORNE_ENGINE_REVISION: 256cde556a407f347e27644e9d0de9e744f8103e
+
 concurrency:
   group: examples-${{ github.ref }}
   cancel-in-progress: true
@@ -24,15 +28,21 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - name: Check out matching development engine
+        uses: actions/checkout@v4
+        with:
+          repository: tehnewb/Valthorne
+          ref: ${{ env.VALTHORNE_ENGINE_REVISION }}
+          path: build/engine
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
       - uses: gradle/actions/wrapper-validation@v4
-      - name: Build, document and validate the published-engine examples
+      - name: Build, document and validate against the matching engine
         shell: bash
-        run: bash ./gradlew build listExamples examplesZip installDist --console=plain --stacktrace
+        run: bash ./gradlew '-PvalthorneDir=build/engine' build listExamples examplesZip installDist --console=plain --stacktrace
       - name: Check installed Unix launcher
         if: runner.os != 'Windows'
         run: |
@@ -71,6 +81,12 @@ jobs:
       ALSOFT_DRIVERS: 'null'
     steps:
       - uses: actions/checkout@v4
+      - name: Check out matching development engine
+        uses: actions/checkout@v4
+        with:
+          repository: tehnewb/Valthorne
+          ref: ${{ env.VALTHORNE_ENGINE_REVISION }}
+          path: build/engine
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -82,7 +98,7 @@ jobs:
         shell: bash
         run: |
           for demo in runMinimalExample run3DExample runPhysics3DExample runLighting2DExample runUIShowcase runAudioStudio; do
-            xvfb-run -a bash ./gradlew "$demo" --args="--smoke" --console=plain --stacktrace
+            xvfb-run -a bash ./gradlew '-PvalthorneDir=build/engine' "$demo" --args="--smoke" --console=plain --stacktrace
           done
       - name: Retain captures
         if: always()

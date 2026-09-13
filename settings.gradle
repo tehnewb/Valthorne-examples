@@ -1,1 +1,6 @@
 rootProject.name = 'Valthorne-examples'
+
+// Opt in when validating changes that have not been published to Maven Central.
+if (providers.gradleProperty('valthorneDir').isPresent()) {
+    includeBuild(file(providers.gradleProperty('valthorneDir').get()))
+}

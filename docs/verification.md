@@ -1,8 +1,10 @@
 # Build, smoke checks and measurements
 
-`./gradlew build` compiles against Maven Central, checks Java formatting, validates
-documentation, verifies packaged assets and runs native gameplay/persistence checks.
-It also generates Javadoc. It does not open a graphics window.
+`./gradlew '-PvalthorneDir=../Valthorne' build` compiles against the sibling development
+engine, checks Java formatting, validates documentation, verifies packaged assets
+and runs native gameplay/persistence checks. It also generates Javadoc. It does not
+open a graphics window. Current main requires that engine checkout until the portable
+APIs are published; release builds continue to use Maven Central without the property.
 
 | Task | Coverage |
 | --- | --- |
@@ -28,10 +30,10 @@ native input actions. Run the same interactive demo afterward when reviewing vis
 changes; a capture check alone does not certify usability or every driver.
 
 ```sh
-./gradlew run3DExample --args="--smoke"
-./gradlew runUIShowcase --args="--smoke"
-./gradlew runPhysicsStudio --args="--smoke --scenario=4"
-./gradlew runFpsArena --args="--smoke"
+./gradlew '-PvalthorneDir=../Valthorne' run3DExample --args="--smoke"
+./gradlew '-PvalthorneDir=../Valthorne' runUIShowcase --args="--smoke"
+./gradlew '-PvalthorneDir=../Valthorne' runPhysicsStudio --args="--smoke --scenario=4"
+./gradlew '-PvalthorneDir=../Valthorne' runFpsArena --args="--smoke"
 ```
 
 Output goes to `build/captures/`, `build/ui-showcase/`, `build/audio-studio/`,
@@ -40,7 +42,8 @@ the demo. Frame capture reads the actual framebuffer size and releases native pi
 storage synchronously. Graphics failures remain failures; headless success does not
 substitute for a working context.
 
-CI builds on Windows, Linux and both Mac architectures. Linux uses Xvfb/Mesa to run
+CI builds on Windows, Linux and both Mac architectures against the engine revision
+pinned in its workflow, checked out under the ignored `build/engine` directory. Linux uses Xvfb/Mesa to run
 the portable starter, scene, physics, 2D lighting, UI and audio smoke checks. Hosted
 Mac graphics are not claimed: see [platform limits](platforms.md). Filament and compute
 smoke runs require appropriate local hardware.

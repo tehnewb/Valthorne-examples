@@ -5,7 +5,6 @@ package valthorne.examples.fps;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.primitives.Rayf;
-import org.lwjgl.BufferUtils;
 
 import valthorne.graphics.Color;
 import valthorne.graphics.model.*;
@@ -15,6 +14,7 @@ import valthorne.graphics.texture.TextureData;
 import valthorne.graphics.texture.TextureFilter;
 import valthorne.math.physics.*;
 
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 /** Transparent glowing particles; every moving particle carries one bounded local light. */
@@ -136,7 +136,7 @@ final class FpsArenaEffects implements AutoCloseable {
     void prepareRendering() {
         if (particleTexture != null) return;
         int size = 32;
-        var pixels = BufferUtils.createByteBuffer(size * size * 4);
+        var pixels = ByteBuffer.allocateDirect(size * size * 4);
         for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++) {
                 float dx = (x + .5f) * 2 / size - 1, dy = (y + .5f) * 2 / size - 1;
@@ -148,7 +148,7 @@ final class FpsArenaEffects implements AutoCloseable {
             }
         pixels.flip();
         try (var state = new RenderStateSnapshot3D()) {
-            org.lwjgl.opengl.GL13.glActiveTexture(org.lwjgl.opengl.GL13.GL_TEXTURE0);
+            valthorne.PlatformTools.textureUnit(0);
             particleTexture = new Texture(new TextureData(pixels, size, size));
             particleTexture.setFilter(TextureFilter.LINEAR);
         }

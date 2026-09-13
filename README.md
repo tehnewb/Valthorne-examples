@@ -2,7 +2,8 @@
 
 Runnable examples for **Valthorne 2.0.0**, from an empty application window to a
 playable 3D arena. Each demo includes its source, a walkthrough, and any required
-redistributable assets. The project consumes the released engine from Maven Central.
+redistributable assets. Released downloads consume the published engine; current
+development sources use the matching engine checkout until the portable APIs are published.
 
 **Java 25 · Gradle wrapper included · Apache-2.0 code · CC0 example assets**
 
@@ -15,6 +16,12 @@ Captured from the included Windows x64 demo. Rendering features and host require
 vary by example; see the catalog below.
 
 ## Start here
+
+For the shared Java FPS desktop/web development workflow, see
+[web development](docs/web-development.md). Runnable example sources are
+maintained in this repository. Building the current sources requires the local
+development engine selected with `'-PvalthorneDir=../Valthorne'` until the new
+portable APIs are published; the released downloads below remain self-contained.
 
 Click a demo name below to download its **Windows x64 ZIP**, extract it, and
 double-click **Start.bat**. Each download includes Java, assets and dependencies.
@@ -43,12 +50,13 @@ and [other platforms](README-RUNTIME.md) are also available.
 
 ## Build or edit the examples
 
-Install JDK 25, clone this repository, and run:
+Install JDK 25 and clone this repository alongside
+[Valthorne](https://github.com/tehnewb/Valthorne), then run:
 
 ```sh
-./gradlew runMinimalExample
-./gradlew listExamples
-./gradlew run3DExample
+./gradlew '-PvalthorneDir=../Valthorne' runMinimalExample
+./gradlew '-PvalthorneDir=../Valthorne' listExamples
+./gradlew '-PvalthorneDir=../Valthorne' run3DExample
 ```
 
 On Windows PowerShell use `./gradlew.bat`. The wrapper supplies native dependencies
@@ -65,17 +73,19 @@ Sources are organized by feature under [src/main/java/valthorne/examples](src/ma
 [Architecture and ownership](docs/architecture.md) explains the boundaries between
 applications, gameplay state, shared assets, input routing and capture utilities.
 Every named type and declared method has a Javadoc contract; build checks enforce
-that coverage. `./gradlew javadoc` generates the reference under `build/docs/javadoc/`.
+that coverage. `./gradlew '-PvalthorneDir=../Valthorne' javadoc` generates the reference
+under `build/docs/javadoc/`.
 
 ```sh
-./gradlew build          # Compile, format check, documentation, asset/native checks
-./gradlew examplesZip    # Optional source-and-assets download
-./gradlew installDist    # Launcher scripts with all runtime dependencies
+./gradlew '-PvalthorneDir=../Valthorne' build          # Compile, format, docs and native checks
+./gradlew '-PvalthorneDir=../Valthorne' examplesZip    # Optional source-and-assets download
+./gradlew '-PvalthorneDir=../Valthorne' installDist    # Launchers with runtime dependencies
 ```
 
 See [verification](docs/verification.md), [contributing](CONTRIBUTING.md), and
 [asset provenance](docs/assets.md). Generated captures, saves and reports live under
-ignored `build/` directories. No test folders or private engine checkout are needed.
+ignored `build/` directories. CI selects an exact development engine revision;
+see [web development](docs/web-development.md) to reproduce that dependency locally.
 
 ## Use Valthorne in your game
 

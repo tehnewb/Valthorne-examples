@@ -186,8 +186,8 @@ public final class FpsArenaWorld implements AutoCloseable {
         finite(strafe, "strafe");
         finite(yawRadians, "yaw");
         if (dt < 0) throw new IllegalArgumentException("dt must be nonnegative");
-        this.forward = Math.clamp(forward, -1f, 1f);
-        this.strafe = Math.clamp(strafe, -1f, 1f);
+        this.forward = valthorne.math.MathUtils.clamp(forward, -1f, 1f);
+        this.strafe = valthorne.math.MathUtils.clamp(strafe, -1f, 1f);
         this.sprint = sprint;
         this.yaw = yawRadians;
         if (jump && !jumpHeld && !isDead()) jumpBuffer = .15f;
@@ -507,7 +507,10 @@ public final class FpsArenaWorld implements AutoCloseable {
         drone.body.setLinearVelocity(
                 approach(velocity.x, vx, 3.8f * dt),
                 approach(velocity.y, vy, 3.8f * dt),
-                approach(velocity.z, Math.clamp((targetHeight - a.z) * 3, -2f, 2f), 5 * dt));
+                approach(
+                        velocity.z,
+                        valthorne.math.MathUtils.clamp((targetHeight - a.z) * 3, -2f, 2f),
+                        5 * dt));
         if (!isDead() && distance < 12 && drone.attackCooldown == 0) {
             b.set(playerPosition).sub(a);
             PhysicsRayHit3D sight =
@@ -966,7 +969,7 @@ public final class FpsArenaWorld implements AutoCloseable {
 
     /** Moves a scalar toward its target by at most the requested nonnegative step. */
     private static float approach(float value, float target, float step) {
-        return value + Math.clamp(target - value, -step, step);
+        return value + valthorne.math.MathUtils.clamp(target - value, -step, step);
     }
 
     /**
