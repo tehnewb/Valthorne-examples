@@ -2,14 +2,10 @@
 
 package valthorne.examples.starter;
 
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
-
-import valthorne.Application;
-import valthorne.JGL;
-import valthorne.JGLConfiguration;
-import valthorne.Keyboard;
-import valthorne.Window;
+import valthorne.*;
 import valthorne.graphics.Color;
+
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
 
 /**
  * The smallest complete application: initialize, update in seconds, render, and dispose. The
@@ -27,38 +23,42 @@ import valthorne.graphics.Color;
  */
 public final class MinimalExample implements Application {
     private final Color background = new Color(.055f, .075f, .12f, 1); // Reused frame color.
-    private boolean smoke; // Whether to exit automatically for a launch check.
     private int frames; // Completed update callbacks.
 
-    /** Launches the application on the process main thread. */
+    /**
+     * Launches the application on the process main thread.
+     */
     public static void main(String[] args) {
-        var example = new MinimalExample();
-        example.smoke = java.util.Arrays.asList(args).contains("--smoke");
-        JGL.init(
-                example,
-                JGLConfiguration.defaults()
-                        .title("Valthorne | Application Starter")
-                        .size(960, 540)
-                        .visible(!example.smoke));
+        JGL.init(new MinimalExample(), JGLConfiguration.defaults().title("Valthorne | Application Starter").size(960, 540));
     }
 
-    /** Creates application resources after the graphics context exists. */
+    /**
+     * Creates application resources after the graphics context exists.
+     */
     @Override
-    public void init() {}
+    public void init() {
+    }
 
-    /** Advances simulation in seconds and handles exit requests. */
+    /**
+     * Advances simulation in seconds and handles exit requests.
+     */
     @Override
     public void update(float delta) {
-        if (Keyboard.isKeyDown(GLFW_KEY_ESCAPE) || (smoke && ++frames >= 3)) Window.requestClose();
+        if (Keyboard.isKeyDown(GLFW_KEY_ESCAPE)) Window.requestClose();
     }
 
-    /** Clears the frame; add drawing after this call. */
+    /**
+     * Clears the frame; add drawing after this call.
+     */
     @Override
     public void render() {
         Window.clear(background);
     }
 
-    /** Releases application-owned resources before the context is destroyed. */
+    /**
+     * Releases application-owned resources before the context is destroyed.
+     */
     @Override
-    public void dispose() {}
+    public void dispose() {
+    }
 }

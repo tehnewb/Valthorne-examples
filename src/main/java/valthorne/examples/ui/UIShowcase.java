@@ -2,102 +2,186 @@
 
 package valthorne.examples.ui;
 
-import static org.lwjgl.opengl.GL11.*;
+import org.lwjgl.BufferUtils;
 
-import valthorne.*;
+import valthorne.JGL;
+import valthorne.JGLConfiguration;
+import valthorne.SwapInterval;
+import valthorne.Window;
 import valthorne.examples.shared.FrameCapture;
 import valthorne.graphics.Color;
+import valthorne.graphics.font.slug.SlugFont;
+import valthorne.graphics.texture.Texture;
 import valthorne.graphics.texture.TextureBatch;
+import valthorne.graphics.texture.TextureData;
 import valthorne.scene.GameScreen;
 import valthorne.scene.Scene;
 import valthorne.ui.UINode;
-import valthorne.ui.nodes.*;
-import valthorne.ui.nodes.nano.*;
+import valthorne.ui.nodes.Button;
+import valthorne.ui.nodes.Checkbox;
+import valthorne.ui.nodes.CollapsibleSection;
+import valthorne.ui.nodes.DataTable;
+import valthorne.ui.nodes.Grid;
+import valthorne.ui.nodes.Image;
+import valthorne.ui.nodes.Label;
+import valthorne.ui.nodes.Modal;
+import valthorne.ui.nodes.Panel;
+import valthorne.ui.nodes.ProgressBar;
+import valthorne.ui.nodes.ScrollPanel;
+import valthorne.ui.nodes.Slider;
+import valthorne.ui.nodes.SlugLabel;
+import valthorne.ui.nodes.SplitPane;
+import valthorne.ui.nodes.TabbedPane;
+import valthorne.ui.nodes.TableColumn;
+import valthorne.ui.nodes.TextField;
+import valthorne.ui.nodes.Tooltip;
+import valthorne.ui.nodes.VirtualList;
+import valthorne.ui.nodes.nano.NanoButton;
+import valthorne.ui.nodes.nano.NanoCheckbox;
+import valthorne.ui.nodes.nano.NanoCollapsibleSection;
+import valthorne.ui.nodes.nano.NanoComboBox;
+import valthorne.ui.nodes.nano.NanoContainer;
+import valthorne.ui.nodes.nano.NanoDataTable;
+import valthorne.ui.nodes.nano.NanoGrid;
+import valthorne.ui.nodes.nano.NanoHyperlink;
+import valthorne.ui.nodes.nano.NanoImage;
+import valthorne.ui.nodes.nano.NanoLabel;
+import valthorne.ui.nodes.nano.NanoModal;
+import valthorne.ui.nodes.nano.NanoPanel;
+import valthorne.ui.nodes.nano.NanoProgressBar;
+import valthorne.ui.nodes.nano.NanoScrollPanel;
+import valthorne.ui.nodes.nano.NanoSlider;
+import valthorne.ui.nodes.nano.NanoSplitPane;
+import valthorne.ui.nodes.nano.NanoTabbedPane;
+import valthorne.ui.nodes.nano.NanoTextField;
+import valthorne.ui.nodes.nano.NanoTooltip;
+import valthorne.ui.nodes.nano.NanoVirtualList;
 import valthorne.ui.theme.ProfessionalTheme;
 import valthorne.ui.theme.ThemeData;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * An interactive catalog of controls, mixed texture/NanoVG content, virtual lists, advanced
- * workspaces and data tools within one input and layout hierarchy.
+ * Complete interactive catalog for every concrete control in Valthorne's current UI library. Pages
+ * group related elements so the source doubles as a set of focused construction examples.
  *
- * <h2>Lifecycle and ownership</h2>
+ * <h2>Ownership</h2>
  *
- * <p>The shared UI root controls capture, focus and page lifetime. Page transitions dispose the old
- * page; themes and preview textures belong to the application. The smoke path visits each page and
- * captures it through the same rendering path as interactive use.
- *
- * <p>Run through {@link valthorne.examples.launcher.ExampleLauncher} for help, validated options
- * and platform checks. Study the accompanying <a
- * href="https://github.com/tehnewb/Valthorne-examples/blob/main/docs/ui.md">example walkthrough</a>
- * for controls, code navigation and extension exercises.
+ * <p>The scene owns its theme, preview image, texture, and Slug font. UI nodes borrow those
+ * resources and are destroyed before the resources are released. The hidden smoke mode visits and
+ * captures every page through the same code path used by interactive navigation.
  */
 public final class UIShowcase extends Scene {
-    private final boolean smoke;
-    private ProfessionalTheme dark, light;
-    private ThemeData darkData, lightData;
-    private boolean lightMode;
-    private NanoPanel shell, content;
-    private NanoLabel status, diagnostics, heading, fpsLabel;
-    private VirtualList virtualList;
-    private valthorne.graphics.texture.TextureData previewData;
-    private valthorne.graphics.texture.Texture previewTexture;
-    private int frame;
-    private float diagnosticTimer;
-    private double fpsElapsed;
-    private int fpsFrames;
+    /** Top-level catalog destinations and their visible descriptions. */
+    private enum Page {
+        FOUNDATIONS("Foundations", "Containers, labels, images and grids"),
+        INPUTS("Inputs", "Buttons, fields, checkboxes, sliders and progress"),
+        NAVIGATION("Navigation", "Scrolling, disclosure, tabs and split panes"),
+        DATA("Data", "Virtual lists and sortable tables"),
+        OVERLAYS("Overlays", "Tooltips, links and modal focus");
 
-    /**
-     * Records whether to run the gallery interactively or visit every page in a bounded smoke
-     * sequence.
-     */
+        private final String title;
+        private final String subtitle;
+
+        /** Stores the display copy used by the navigation and workspace header. */
+        Page(String title, String subtitle) {
+            this.title = title;
+            this.subtitle = subtitle;
+        }
+    }
+
+    private static final Color BACKGROUND = new Color(0xFF0B1018);
+    private static final Color SIDEBAR = new Color(0xFF111A27);
+    private static final Color CARD = new Color(0xFF182334);
+    private static final Color ACCENT = new Color(0xFF73A7FF);
+    private static final Color MUTED = new Color(0xFF9AAAC0);
+
+    private final boolean smoke;
+    private ProfessionalTheme theme;
+    private ThemeData themeData;
+    private TextureData previewData;
+    private Texture previewTexture;
+    private SlugFont slugFont;
+    private NanoPanel stage;
+    private NanoPanel pageHost;
+    private NanoLabel pageTitle;
+    private NanoLabel pageSubtitle;
+    private NanoLabel status;
+    private Page currentPage = Page.FOUNDATIONS;
+    private int smokeFrame;
+
+    /** Creates an interactive or bounded smoke-test version of the catalog. */
     private UIShowcase(boolean smoke) {
         this.smoke = smoke;
     }
 
-    /**
-     * Starts this application on the process main thread. Prefer the documented Gradle launcher for
-     * validated options and platform checks.
-     *
-     * @param args command-line options documented by the example guide
-     */
+    /** Starts the showcase using the common scene and UI event pipeline. */
     public static void main(String[] args) {
-        boolean smoke = java.util.Arrays.asList(args).contains("--smoke");
+        boolean smoke = Arrays.asList(args).contains("--smoke");
         JGL.init(
                 new GameScreen(new UIShowcase(smoke)),
                 JGLConfiguration.defaults()
-                        .title("Valthorne | UI Showcase")
-                        .size(1280, 820)
-                        .samples(16)
-                        .swapInterval(SwapInterval.OFF)
+                        .title("Valthorne | Complete UI Showcase")
+                        .size(1440, 900)
+                        .samples(8)
+                        .swapInterval(SwapInterval.VSYNC)
                         .visible(!smoke));
     }
 
     /**
-     * Creates the demo scene, rendering resources and input/UI connections after Valthorne has
-     * initialized the graphics context.
+     * Creates owned resources, applies the professional theme, and builds the application shell.
      */
     @Override
     public void init() {
         camera = null;
-        var pixels = org.lwjgl.BufferUtils.createByteBuffer(32 * 32 * 4);
-        for (int y = 0; y < 32; y++)
-            for (int x = 0; x < 32; x++)
-                pixels.put((byte) (70 + x * 4))
-                        .put((byte) (90 + y * 4))
-                        .put((byte) 230)
-                        .put((byte) 255);
+        theme = new ProfessionalTheme(false, 1);
+        themeData = theme.create();
+        ui.setTheme(themeData);
+        createPreviewImage();
+        loadSlugFont();
+        buildShell();
+        show(Page.FOUNDATIONS);
+        ui.layout();
+    }
+
+    /** Creates a small reusable gradient image for both image-rendering backends. */
+    private void createPreviewImage() {
+        int size = 96;
+        var pixels = BufferUtils.createByteBuffer(size * size * 4);
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                float glow = 1f - Math.min(1f, (float) Math.hypot(x - 48, y - 42) / 68f);
+                pixels.put((byte) (35 + 70 * glow));
+                pixels.put((byte) (75 + 85 * glow));
+                pixels.put((byte) (145 + 100 * glow));
+                pixels.put((byte) 255);
+            }
+        }
         pixels.flip();
-        previewData = new valthorne.graphics.texture.TextureData(pixels, 32, 32);
-        previewTexture = new valthorne.graphics.texture.Texture(previewData);
-        dark = new ProfessionalTheme(false, 1);
-        light = new ProfessionalTheme(true, 1);
-        darkData = dark.create();
-        lightData = light.create();
-        ui.setTheme(darkData);
-        shell = new NanoPanel();
-        shell.getLayout()
+        previewData = new TextureData(pixels, size, size);
+        previewTexture = new Texture(previewData);
+    }
+
+    /** Loads the bundled theme typeface into the current Slug renderer. */
+    private void loadSlugFont() {
+        try (var stream =
+                ProfessionalTheme.class.getResourceAsStream(
+                        "/ui/AtkinsonHyperlegible-Regular.ttf")) {
+            if (stream == null) throw new IllegalStateException("Bundled UI font is missing");
+            slugFont = SlugFont.load(stream.readAllBytes(), 32, 95);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load the bundled Slug font", exception);
+        }
+    }
+
+    /** Builds the permanent header, navigation rail, page host, and status bar. */
+    private void buildShell() {
+        stage = panel(BACKGROUND);
+        stage.getLayout()
                 .absolute()
                 .left(0)
                 .top(0)
@@ -106,617 +190,635 @@ public final class UIShowcase extends Scene {
                 .column()
                 .padding(24)
                 .gap(18);
-        shell.setStyle(NanoPanel.BACKGROUND_COLOR_KEY, dark.surface);
-        ui.add(shell);
-        var top = new NanoContainer();
-        top.getLayout().row().widthPercent(100).height(52).gap(16).itemsCenter();
-        var title = label("VALTHORNE / UI LAB", 25);
-        title.getLayout().grow();
-        top.add(title);
-        fpsLabel = label("FPS / warming up", 16);
-        fpsLabel.getLayout().width(210).noShrink();
-        fpsLabel.setTooltip(
-                "Average FPS and frame time over the last half-second, including presentation"
-                        + " waits.");
-        top.add(fpsLabel);
-        top.add(
-                button(
-                        "Switch theme",
-                        () -> {
-                            lightMode = !lightMode;
-                            ui.setTheme(lightMode ? lightData : darkData);
-                            shell.setStyle(
-                                    NanoPanel.BACKGROUND_COLOR_KEY,
-                                    lightMode ? light.surface : dark.surface);
-                        }));
-        top.add(
-                button(
-                        "Inspector",
-                        () -> {
-                            var inspector = ui.getInspector();
-                            inspector.setEnabled(!inspector.isEnabled());
-                            inspector.setOutlines(true);
-                        }));
-        shell.add(top);
+        ui.add(stage);
+
+        var header = new NanoContainer();
+        header.getLayout().row().widthPercent(100).height(64).itemsCenter().gap(16).noShrink();
+        var brand = nanoLabel("VALTHORNE", 25, ACCENT);
+        brand.getLayout().width(210).noShrink();
+        header.add(brand);
+        var identity = new NanoContainer();
+        identity.getLayout().column().grow().gap(2);
+        identity.add(nanoLabel("UI COMPONENT GALLERY", 17, theme.text));
+        identity.add(
+                nanoLabel("Every current element · two rendering backends · one tree", 13, MUTED));
+        header.add(identity);
+        header.add(nanoButton("Inspect layout", this::toggleInspector));
+        stage.add(header);
+
         var body = new NanoContainer();
-        body.getLayout().row().grow().height(0).widthPercent(100).gap(20).minHeight(0);
-        shell.add(body);
-        var sidebar = new NanoPanel();
-        sidebar.getLayout().width(224).heightPercent(100).noShrink().column().padding(16).gap(12);
-        sidebar.add(label("EXPLORE", 13));
-        sidebar.add(button("01  Controls", this::controls));
-        sidebar.add(button("02  Mixed nesting", this::mixed));
-        sidebar.add(button("03  10,000 items", this::largeList));
-        sidebar.add(button("04  Workspace", this::advanced));
-        sidebar.add(button("05  Data tools", this::dataTools));
-        sidebar.add(
-                label(
-                        "Tab / Shift+Tab: focus\n"
-                                + "Enter / Space: activate\n"
-                                + "Escape: close modal\n"
-                                + "Ctrl+Z / Ctrl+Y: undo / redo",
-                        14));
-        diagnostics = label("", 13);
-        diagnostics.getLayout().widthPercent(100).grow();
-        sidebar.add(diagnostics);
-        body.add(sidebar);
+        body.getLayout().row().grow().height(0).widthPercent(100).gap(18).minHeight(0);
+        stage.add(body);
+        body.add(buildSidebar());
+
         var workspace = new NanoContainer();
-        workspace.getLayout().width(0).grow().heightPercent(100).column().gap(14).minWidth(0);
-        heading = label("", 24);
-        workspace.add(heading);
-        content = new NanoPanel();
-        content.getLayout()
+        workspace.getLayout().column().grow().width(0).heightPercent(100).gap(12).minWidth(0);
+        pageTitle = nanoLabel("", 27, theme.text);
+        pageSubtitle = nanoLabel("", 14, MUTED);
+        workspace.add(pageTitle);
+        workspace.add(pageSubtitle);
+        pageHost = panel(CARD);
+        pageHost.getLayout()
+                .column()
                 .grow()
                 .height(0)
                 .widthPercent(100)
                 .minHeight(0)
-                .padding(20)
-                .column()
+                .padding(18)
                 .gap(14);
-        workspace.add(content);
+        workspace.add(pageHost);
         body.add(workspace);
-        status = label("One tree. Two renderers. Shared behavior.", 15);
-        shell.add(status);
-        controls();
-        ui.layout();
+
+        status = nanoLabel("Ready · Tab moves focus · Enter or Space activates", 13, MUTED);
+        stage.add(status);
     }
 
-    /** Disposes the previous page content and starts a new labeled gallery section. */
-    private void reset(String title) {
+    /** Creates the persistent page navigation and concise keyboard help. */
+    private NanoPanel buildSidebar() {
+        var sidebar = panel(SIDEBAR);
+        sidebar.getLayout().width(230).heightPercent(100).column().padding(14).gap(10).noShrink();
+        sidebar.add(nanoLabel("CATALOG", 12, MUTED));
+        int number = 1;
+        for (Page page : Page.values()) {
+            String label = "%02d   %s".formatted(number++, page.title);
+            var button = nanoButton(label, () -> show(page));
+            button.getLayout().widthPercent(100);
+            sidebar.add(button);
+        }
+        var spacer = new NanoContainer();
+        spacer.getLayout().grow();
+        sidebar.add(spacer);
+        sidebar.add(nanoLabel("KEYBOARD", 12, MUTED));
+        sidebar.add(
+                nanoLabel(
+                        "Tab / Shift+Tab   Focus\n"
+                                + "Enter / Space     Activate\n"
+                                + "Arrow keys        Adjust\n"
+                                + "Escape            Dismiss",
+                        13,
+                        MUTED));
+        return sidebar;
+    }
+
+    /** Enables or disables the root's live bounds inspector. */
+    private void toggleInspector() {
+        var inspector = ui.getInspector();
+        inspector.setEnabled(!inspector.isEnabled());
+        inspector.setOutlines(true);
+        status.text("Layout inspector " + (inspector.isEnabled() ? "enabled" : "disabled"));
+    }
+
+    /** Replaces the active page with a freshly constructed component family. */
+    private void show(Page page) {
         ui.cancelInput();
-        content.clear();
-        virtualList = null;
-        heading.text(title);
+        currentPage = page;
+        pageHost.clear();
+        pageTitle.text(page.title);
+        pageSubtitle.text(page.subtitle);
+        switch (page) {
+            case FOUNDATIONS -> buildFoundationsPage();
+            case INPUTS -> buildInputsPage();
+            case NAVIGATION -> buildNavigationPage();
+            case DATA -> buildDataPage();
+            case OVERLAYS -> buildOverlaysPage();
+        }
+        status.text(page.title + " · all controls are live and keyboard accessible");
     }
 
-    /**
-     * Builds the basic control page, including stateful inputs and examples of callback-driven
-     * updates.
-     */
-    private void controls() {
-        reset("Controls / consistent behavior, different skins");
-        var scroll = new NanoScrollPanel().horizontal(false).horizontalBar(false);
-        scroll.getLayout().widthPercent(100).grow().height(0).minHeight(0);
-        var columns = new Panel();
-        columns.getLayout().widthPercent(100).row().gap(24).noShrink();
-        var regular = new Panel();
-        regular.getLayout().widthPercent(47).column().gap(14).noShrink();
-        var vector = new NanoContainer();
-        vector.getLayout().widthPercent(47).column().gap(14).noShrink();
-        columns.add(regular);
-        columns.add(vector);
-        scroll.setContent(columns);
-        content.add(scroll);
-        regular.add(label("TEXTURE CONTROLS", 15));
-        vector.add(label("NANOVG CONTROLS", 15));
-        var first =
-                new Button("Texture button").action(b -> status.text("Texture button activated"));
-        size(first, 38);
-        regular.add(first);
-        vector.add(button("Nano button", () -> status.text("Nano button activated")));
-        var field = new TextField("Type here, then undo");
-        size(field, 40);
-        field.getLayout().widthPercent(100);
-        regular.add(field);
-        var nanoField = new NanoTextField("Unicode, selection, undo");
-        size(nanoField, 40);
-        nanoField.getLayout().widthPercent(100);
+    /** Shows containers, labels, both image paths, both grids, and Slug text. */
+    private void buildFoundationsPage() {
+        var scroll = pageScroll();
+        var gallery = galleryGrid();
+        scroll.setContent(gallery);
+        pageHost.add(scroll);
+
+        var textureCard = card("TEXTURE FOUNDATIONS", "Panel · Label · Image · Grid");
+        textureCard.add(regularLabel("Crisp atlas text from a themed Label"));
+        var imageRow = new Panel();
+        imageRow.getLayout().row().gap(12).height(88).noShrink();
+        var image = new Image(previewTexture);
+        image.getLayout().width(88).height(88);
+        imageRow.add(image);
+        var grid = new Grid().columns(3).cellSize(52, 32).gap(7);
+        for (int i = 1; i <= 6; i++) grid.add(new Button(Integer.toString(i)));
+        imageRow.add(grid);
+        textureCard.add(imageRow);
+        gallery.add(textureCard);
+
+        var nanoCard = card("VECTOR FOUNDATIONS", "NanoPanel · NanoLabel · NanoImage · NanoGrid");
+        nanoCard.add(
+                nanoLabel("NanoVG text stays sharp at any scale", 16, theme.text).selectable(true));
+        var nanoRow = new NanoContainer();
+        nanoRow.getLayout().row().gap(12).height(88).noShrink();
+        var nanoImage = new NanoImage(previewData);
+        nanoImage.getLayout().width(88).height(88);
+        nanoRow.add(nanoImage);
+        var nanoGrid = new NanoGrid().columns(3).cellSize(52, 32).gap(7);
+        for (int i = 1; i <= 6; i++) nanoGrid.add(new NanoButton(Integer.toString(i)));
+        nanoRow.add(nanoGrid);
+        nanoCard.add(nanoRow);
+        gallery.add(nanoCard);
+
+        var typography = card("SLUG TEXT", "SlugLabel · cached atlas and live curves");
+        typography.add(
+                new SlugLabel(slugFont, "Resolution-independent display type", 25).color(ACCENT));
+        typography.add(
+                new SlugLabel(slugFont, "Live curve rendering at showcase scale", 34)
+                        .color(theme.text)
+                        .liveCurves(true));
+        gallery.add(typography);
+
+        var composition = card("MIXED COMPOSITION", "NanoContainer · nested renderer switching");
+        composition.add(nanoLabel("Both backends share layout, clipping and input.", 15, MUTED));
+        var mixed = new NanoContainer();
+        mixed.getLayout().row().gap(10).height(42).noShrink();
+        mixed.add(new Button("Texture child"));
+        mixed.add(new NanoButton("Vector child"));
+        composition.add(mixed);
+        gallery.add(composition);
+    }
+
+    /** Shows every input control and connects paired sliders to paired progress bars. */
+    private void buildInputsPage() {
+        var scroll = pageScroll();
+        var gallery = galleryGrid();
+        scroll.setContent(gallery);
+        pageHost.add(scroll);
+
+        var texture =
+                card("TEXTURE CONTROLS", "Button · TextField · Checkbox · Slider · ProgressBar");
+        var textureButton = new Button("Create texture action");
+        textureButton.action(button -> status.text("Texture button activated"));
+        rowHeight(textureButton, 40);
+        texture.add(textureButton);
+        var textureField = new TextField("Type a project name");
+        textureField.action(field -> status.text("Submitted: " + field.getText()));
+        rowHeight(textureField, 40);
+        texture.add(textureField);
+        var textureCheck = new Checkbox().checked(true);
+        textureCheck.action(check -> status.text("Texture checkbox: " + check.isChecked()));
+        textureCheck.getLayout().width(26).height(26);
+        texture.add(labeledRow("Enable texture controls", textureCheck));
+        var textureProgress = new ProgressBar(0, 100).progress(64).displayPercentage(true);
+        rowHeight(textureProgress, 25);
+        var textureSlider = new Slider(0, 100, 64).stepSize(1);
+        textureSlider.action(slider -> textureProgress.progress(slider.getValue()));
+        rowHeight(textureSlider, 32);
+        texture.add(textureSlider);
+        texture.add(textureProgress);
+        gallery.add(texture);
+
+        var vector =
+                card("VECTOR CONTROLS", "NanoButton · NanoTextField · NanoCheckbox · NanoSlider");
+        vector.add(nanoButton("Create vector action", () -> status.text("Nano button activated")));
+        var nanoField = new NanoTextField("Search components");
+        nanoField.action(field -> status.text("Submitted: " + field.getText()));
+        rowHeight(nanoField, 40);
         vector.add(nanoField);
-        field.getEditor().validator(value -> !value.isBlank());
-        nanoField.getEditor().validator(value -> !value.isBlank());
-        var password = new TextField("Protected clipboard").masking(true);
-        size(password, 40);
-        password.getLayout().widthPercent(100);
-        regular.add(password);
-        var nanoPassword = new NanoTextField("Protected clipboard").masking(true);
-        size(nanoPassword, 40);
-        nanoPassword.getLayout().widthPercent(100);
-        vector.add(nanoPassword);
-        var progress = new ProgressBar(0, 100).progress(50).displayPercentage(true);
-        size(progress, 26);
-        var nanoProgress = new NanoProgressBar(0, 100).progress(50).displayPercentage(true);
-        size(nanoProgress, 26);
-        var slider =
-                new Slider(0, 100, 50)
-                        .stepSize(1)
-                        .action(
-                                s -> {
-                                    progress.progress(s.getValue());
-                                    status.text("Texture slider: " + (int) s.getValue());
-                                });
-        var nanoSlider =
-                new NanoSlider(0, 100, 50)
-                        .stepSize(1)
-                        .action(
-                                s -> {
-                                    nanoProgress.progress(s.getValue());
-                                    status.text("Nano slider: " + (int) s.getValue());
-                                });
-        size(slider, 32);
-        size(nanoSlider, 32);
-        slider.getLayout().widthPercent(100);
-        nanoSlider.getLayout().widthPercent(100);
-        regular.add(slider);
+        var nanoCheck = new NanoCheckbox().checked(true);
+        nanoCheck.action(check -> status.text("Nano checkbox: " + check.isChecked()));
+        nanoCheck.getLayout().width(26).height(26);
+        vector.add(labeledRow("Enable vector controls", nanoCheck));
+        var nanoProgress = new NanoProgressBar(0, 100).progress(72).displayPercentage(true);
+        rowHeight(nanoProgress, 25);
+        var nanoSlider = new NanoSlider(0, 100, 72).stepSize(1);
+        nanoSlider.action(slider -> nanoProgress.progress(slider.getValue()));
+        rowHeight(nanoSlider, 32);
         vector.add(nanoSlider);
-        progress.update(1f);
-        nanoProgress.update(1f);
-        regular.add(progress);
         vector.add(nanoProgress);
-        var check = new Checkbox().action(c -> status.text("Texture checkbox: " + c.isChecked()));
-        check.getLayout().width(24).height(24);
-        var nanoCheck =
-                new NanoCheckbox().action(c -> status.text("Nano checkbox: " + c.isChecked()));
-        nanoCheck.getLayout().width(24).height(24);
-        regular.add(check);
-        vector.add(nanoCheck);
-        var disabled = new Button("Disabled");
-        size(disabled, 38);
+        gallery.add(vector);
+
+        var states = card("STATES & CHOICES", "Disabled states · masking · NanoComboBox");
+        var disabled = new Button("Unavailable action");
         disabled.setEnabled(false);
-        regular.add(disabled);
-        var nanoDisabled = button("Disabled", () -> {});
-        nanoDisabled.setEnabled(false);
-        vector.add(nanoDisabled);
-        regular.add(button("Texture modal + Nano content", () -> showModal(false)));
-        vector.add(button("Nano modal + Texture content", () -> showModal(true)));
-        first.setTooltip("A regular button inside a mixed UI tree");
-        nanoSlider.setTooltip("Click, drag, scroll, or use arrow keys");
-        var choices =
+        rowHeight(disabled, 40);
+        states.add(disabled);
+        var password = new TextField("Password").masking(true);
+        rowHeight(password, 40);
+        states.add(password);
+        var nanoPassword = new NanoTextField("Vector password").masking(true);
+        rowHeight(nanoPassword, 40);
+        states.add(nanoPassword);
+        var combo =
                 new NanoComboBox<String>()
-                        .items(java.util.List.of("Balanced", "Performance", "Quality"))
-                        .onChange(value -> status.text("Selected preset: " + value));
-        choices.getLayout().widthPercent(100);
-        vector.add(choices);
-        regular.add(label("Text, clipboard and range logic\nare independent of rendering.", 14));
-        vector.add(label("Use the inspector to see bounds,\nfocus, capture and frame costs.", 14));
+                        .items(List.of("Balanced", "Performance", "Quality"))
+                        .selectedIndex(0)
+                        .onChange(value -> status.text("Preset: " + value));
+        rowHeight(combo, 40);
+        states.add(combo);
+        gallery.add(states);
+
+        var orientation = card("ORIENTATION", "Vertical Slider · vertical ProgressBar");
+        var verticalRow = new NanoContainer();
+        verticalRow.getLayout().row().height(150).gap(24).noShrink();
+        var verticalSlider = new Slider(0, 100, 45).vertical(true);
+        verticalSlider.getLayout().width(34).height(140);
+        var verticalProgress = new NanoProgressBar(0, 100).progress(45).vertical(true);
+        verticalProgress.getLayout().width(34).height(140);
+        verticalSlider.action(slider -> verticalProgress.progress(slider.getValue()));
+        verticalRow.add(verticalSlider);
+        verticalRow.add(verticalProgress);
+        orientation.add(verticalRow);
+        gallery.add(orientation);
     }
 
-    /**
-     * Shows a texture or NanoVG modal through the shared root so focus and pointer routing remain
-     * consistent.
-     */
-    private void showModal(boolean nano) {
-        var form = new Panel();
-        form.getLayout().width(380).column().padding(24).gap(16);
-        form.add(label("Focus stays inside this dialog", 21));
-        var field = new NanoTextField("Try Tab, Shift+Tab, then Escape");
-        size(field, 40);
-        form.add(field);
-        if (nano) {
-            var modal = new NanoModal(content).content(form).closeOnOutsideClick(true);
-            form.add(new Button("Close dialog").action(b -> modal.close()));
-            modal.open();
-        } else {
-            var modal = new Modal(content).content(form).closeOnOutsideClick(true);
-            form.add(button("Close dialog", modal::close));
-            modal.open();
-        }
+    /** Shows both implementations of scrolling, disclosure, tabs, and draggable splits. */
+    private void buildNavigationPage() {
+        var tabs = new NanoTabbedPane();
+        tabs.getLayout().grow().height(0).widthPercent(100).minHeight(0);
+        tabs.addTab("Scrolling", this::scrollingDemo);
+        tabs.addTab("Disclosure", this::disclosureDemo);
+        tabs.addTab("Tabs", this::tabsDemo);
+        tabs.addTab("Split panes", this::splitDemo);
+        pageHost.add(tabs);
     }
 
-    /** Builds a page mixing texture and NanoVG nodes in one layout and input hierarchy. */
-    private void mixed() {
-        reset("Mixed nesting / scrolling and clipping");
-        content.add(label("Texture scroll panel / Nano panel / texture buttons / Nano labels", 16));
-        var previews = new NanoContainer();
-        previews.getLayout().row().gap(16).height(56).noShrink();
-        var textureGrid = new Grid().columns(2).cellSize(48, 48);
-        textureGrid.getLayout().gap(8);
-        textureGrid.add(new Image(previewTexture), new NanoImage(previewData));
-        var nanoGrid = new NanoGrid().columns(2).cellSize(48, 48);
-        nanoGrid.getLayout().gap(8);
-        nanoGrid.add(new Image(previewTexture), new NanoImage(previewData));
-        previews.add(textureGrid);
-        previews.add(nanoGrid);
-        previews.add(label("Both grid and image families\nshare the same source pixels.", 14));
-        content.add(previews);
-        var outer = new ScrollPanel();
-        outer.horizontal(false).horizontalBar(false);
-        outer.getLayout().widthPercent(100).grow().height(0).minHeight(0);
-        var stack = new NanoPanel();
-        stack.getLayout().widthPercent(100).column().gap(12).padding(16).noShrink();
-        for (int i = 0; i < 18; i++) {
-            var row = new Button("Texture row " + (i + 1));
-            row.getLayout().height(48).widthPercent(100).noShrink();
-            int index = i;
-            row.action(b -> status.text("Mixed row " + (index + 1) + " activated"));
-            stack.add(row);
-            if (i == 2) {
-                var nested = new NanoScrollPanel().horizontal(false).horizontalBar(false);
-                nested.getLayout().height(140).widthPercent(100).noShrink();
-                var items = new Panel();
-                items.getLayout().widthPercent(100).column().gap(6).noShrink();
-                for (int j = 0; j < 12; j++) {
-                    var cell = button("Inner scroll item " + j, () -> {});
-                    cell.getLayout().noShrink();
-                    items.add(cell);
-                }
-                nested.setContent(items);
-                stack.add(nested);
-            }
-        }
-        outer.setContent(stack);
-        content.add(outer);
+    /** Builds side-by-side texture and NanoVG scrolling examples. */
+    private UINode scrollingDemo() {
+        var row = twoColumns();
+        var texture = card("SCROLL PANEL", "ScrollPanel · texture content");
+        var textureScroll = new ScrollPanel().horizontal(false).horizontalBar(false);
+        textureScroll.getLayout().grow().height(0).minHeight(0).widthPercent(100);
+        var textureItems = new Panel();
+        textureItems.getLayout().column().gap(7).widthPercent(100).noShrink();
+        for (int i = 1; i <= 18; i++) textureItems.add(new Button("Texture item " + i));
+        textureScroll.setContent(textureItems);
+        texture.add(textureScroll);
+        row.add(texture);
+
+        var vector = card("NANO SCROLL PANEL", "NanoScrollPanel · vector content");
+        var nanoScroll = new NanoScrollPanel().horizontal(false).horizontalBar(false);
+        nanoScroll.getLayout().grow().height(0).minHeight(0).widthPercent(100);
+        var nanoItems = new NanoContainer();
+        nanoItems.getLayout().column().gap(7).widthPercent(100).noShrink();
+        for (int i = 1; i <= 18; i++) nanoItems.add(new NanoButton("Vector item " + i));
+        nanoScroll.setContent(nanoItems);
+        vector.add(nanoScroll);
+        row.add(vector);
+        return row;
     }
 
-    /**
-     * Builds the virtualized list demonstration, keeping visible row nodes bounded as the dataset
-     * grows.
-     */
-    private void largeList() {
-        reset("10,000 items / bounded live widgets");
-        content.add(
-                label(
-                        "Alternating texture and Nano cells. Scroll freely or jump to the final"
-                                + " row.",
-                        16));
-        var commands = new NanoContainer();
-        commands.getLayout().row().gap(12).height(38);
-        commands.add(button("Jump to end", () -> virtualList.scrollToIndex(9999)));
-        commands.add(button("Back to start", () -> virtualList.scrollToIndex(0)));
-        content.add(commands);
-        virtualList =
+    /** Builds the two collapsible-section implementations. */
+    private UINode disclosureDemo() {
+        var row = twoColumns();
+        var texture = card("COLLAPSIBLE SECTION", "Texture header and retained content");
+        var textureContent = new Panel();
+        textureContent.getLayout().column().padding(12).gap(8);
+        textureContent.add(regularLabel("Texture content remains attached while collapsed."));
+        texture.add(new CollapsibleSection("Texture details", textureContent));
+        row.add(texture);
+        var vector = card("NANO COLLAPSIBLE SECTION", "Vector header and retained content");
+        var nanoContent = new NanoContainer();
+        nanoContent.getLayout().column().padding(12).gap(8);
+        nanoContent.add(nanoLabel("Vector content uses the same disclosure behavior.", 15, MUTED));
+        vector.add(new NanoCollapsibleSection("Vector details", nanoContent));
+        row.add(vector);
+        return row;
+    }
+
+    /** Builds nested regular and NanoVG tabbed panes. */
+    private UINode tabsDemo() {
+        var row = twoColumns();
+        var texture = card("TABBED PANE", "Lazy texture-backed pages");
+        var textureTabs = new TabbedPane();
+        textureTabs.addTab("Overview", () -> regularTabPage("Texture tab content"));
+        textureTabs.addTab("Settings", () -> regularTabPage("Created when first selected"));
+        textureTabs.getLayout().grow().height(0).minHeight(0).widthPercent(100);
+        texture.add(textureTabs);
+        row.add(texture);
+        var vector = card("NANO TABBED PANE", "Lazy NanoVG pages");
+        var nanoTabs = new NanoTabbedPane();
+        nanoTabs.addTab("Overview", () -> nanoTabPage("Vector tab content"));
+        nanoTabs.addTab("Settings", () -> nanoTabPage("State persists between selections"));
+        nanoTabs.getLayout().grow().height(0).minHeight(0).widthPercent(100);
+        vector.add(nanoTabs);
+        row.add(vector);
+        return row;
+    }
+
+    /** Builds matching draggable split panes for both renderers. */
+    private UINode splitDemo() {
+        var row = twoColumns();
+        var texture = card("SPLIT PANE", "Drag or focus the texture divider");
+        var textureSplit =
+                new SplitPane(regularTabPage("Left workspace"), regularTabPage("Right workspace"))
+                        .ratio(.42f)
+                        .minimumSizes(120, 120)
+                        .dividerSize(10);
+        textureSplit.getLayout().grow().height(0).minHeight(0).widthPercent(100);
+        texture.add(textureSplit);
+        row.add(texture);
+        var vector = card("NANO SPLIT PANE", "Drag or focus the vector divider");
+        var nanoSplit =
+                new NanoSplitPane(nanoTabPage("Left workspace"), nanoTabPage("Right workspace"))
+                        .ratio(.58f)
+                        .minimumSizes(120, 120)
+                        .dividerSize(10);
+        nanoSplit.getLayout().grow().height(0).minHeight(0).widthPercent(100);
+        vector.add(nanoSplit);
+        row.add(vector);
+        return row;
+    }
+
+    /** Shows both virtual-list and data-table implementations with realistic data volumes. */
+    private void buildDataPage() {
+        var tabs = new NanoTabbedPane();
+        tabs.getLayout().grow().height(0).widthPercent(100).minHeight(0);
+        tabs.addTab("Virtual lists", this::virtualListsDemo);
+        tabs.addTab("Data tables", this::dataTablesDemo);
+        pageHost.add(tabs);
+    }
+
+    /** Builds two independently virtualized 5,000-item collections. */
+    private UINode virtualListsDemo() {
+        var row = twoColumns();
+        var texture = card("VIRTUAL LIST", "5,000 texture rows · bounded live nodes");
+        var list =
                 new VirtualList(
-                        10000,
-                        i ->
-                                i % 2 == 0
-                                        ? new Button("Texture / " + i)
-                                                .action(b -> status.text("Selected item " + i))
-                                        : new NanoButton("Nano / " + i)
-                                                .action(b -> status.text("Selected item " + i)));
-        virtualList.columns(4).rowHeight(44).gap(8);
-        virtualList.getLayout().grow().height(0).widthPercent(100).minHeight(0);
-        content.add(virtualList);
+                                5000,
+                                index ->
+                                        new Button("Asset %04d".formatted(index))
+                                                .action(button -> status.text("Asset " + index)))
+                        .rowHeight(40)
+                        .gap(5)
+                        .selectable(true);
+        list.getLayout().grow().height(0).minHeight(0).widthPercent(100);
+        texture.add(list);
+        row.add(texture);
+
+        var vector = card("NANO VIRTUAL LIST", "5,000 vector rows · variable heights");
+        var nanoList =
+                new NanoVirtualList(
+                                5000,
+                                index ->
+                                        new NanoButton("Record %04d".formatted(index))
+                                                .action(button -> status.text("Record " + index)))
+                        .rowHeight(40)
+                        .gap(5)
+                        .selectable(true)
+                        .variableHeights();
+        for (int index = 0; index < 5000; index += 9) nanoList.itemHeight(index, 56);
+        nanoList.getLayout().grow().height(0).minHeight(0).widthPercent(100);
+        vector.add(nanoList);
+        row.add(vector);
+        return row;
     }
 
-    /** Builds the advanced workspace controls and editing demonstrations. */
-    private void advanced() {
-        reset("Workspace / tabs, split panes and measured rows");
-        content.add(
-                label(
-                        "Drag the divider. Use tab-header arrows. Shift/Ctrl-click rows to select.",
-                        15));
-        var tabs = new TabbedPane();
-        tabs.addTab(
-                "Documents",
-                () -> {
-                    var column = new NanoContainer();
-                    column.getLayout().column().gap(12).padding(12);
-                    column.add(label("Retained document state", 21));
-                    var field = new NanoTextField("Edit me, then switch tabs");
-                    size(field, 40);
-                    column.add(field);
-                    column.add(
-                            label(
-                                    "Inactive tabs keep their contents\n"
-                                            + "but do no update or drawing work.",
-                                    15));
-                    return column;
-                });
-        tabs.addTab(
-                "Settings",
-                () -> {
-                    var column = new Panel();
-                    column.getLayout().column().gap(12).padding(12);
-                    column.add(label("Created only when opened", 20));
-                    column.add(
-                            new Button("Texture action")
-                                    .action(b -> status.text("Lazy settings page activated")));
-                    var slider = new NanoSlider(0, 100, 50);
-                    size(slider, 32);
-                    column.add(slider);
-                    return column;
-                });
-        virtualList =
-                new VirtualList(
-                        10000,
-                        i -> {
-                            var row =
-                                    new NanoButton(
-                                            "Record "
-                                                    + i
-                                                    + (i % 4 == 0 ? " / expanded details" : ""));
-                            row.action(
-                                    b ->
-                                            status.text(
-                                                    "Selected "
-                                                            + virtualList
-                                                                    .getSelection()
-                                                                    .selectedCount()
-                                                            + " records"));
-                            return row;
-                        });
-        virtualList.rowHeight(40).gap(4).selectable(true).variableHeights();
-        for (int i = 0; i < 10000; i += 4) virtualList.itemHeight(i, 72);
-        var split =
-                new SplitPane(tabs, virtualList).ratio(.52f).minimumSizes(200, 180).dividerSize(10);
-        split.getLayout().grow().height(0).widthPercent(100).minHeight(0);
-        content.add(split);
-    }
-
-    /** Stable sample data row displayed by the gallery's sortable/filterable table. */
-    private record AssetRow(int id, String name, String type) {}
-
-    /**
-     * Builds the sortable/filterable data tools page with stable row identifiers and inspector
-     * feedback.
-     */
-    private void dataTools() {
-        reset("Data tools / searchable table and collapsible sections");
-        var table =
-                new DataTable<AssetRow>(
-                        java.util.List.of(
-                                new TableColumn<>(
-                                        "ID",
-                                        1,
-                                        row -> new Label(Integer.toString(row.id())),
-                                        java.util.Comparator.comparingInt(AssetRow::id)),
-                                TableColumn.text("Name", 3, AssetRow::name),
-                                TableColumn.text("Type", 2, AssetRow::type)));
-        var data = new java.util.ArrayList<AssetRow>(10000);
-        for (int i = 0; i < 10000; i++)
-            data.add(
-                    new AssetRow(
-                            i,
-                            "Asset " + i,
-                            i % 3 == 0 ? "Texture" : i % 3 == 1 ? "Audio" : "Scene"));
-        table.rows(data);
+    /** Builds matching sortable, virtualized tables from shared row data. */
+    private UINode dataTablesDemo() {
+        List<ComponentRow> rows = componentRows();
+        var columns =
+                List.of(
+                        TableColumn.text("Component", 3, ComponentRow::name),
+                        TableColumn.text("Family", 2, ComponentRow::family),
+                        TableColumn.text("State", 1, ComponentRow::state));
+        var layout = twoColumns();
+        var texture = card("DATA TABLE", "Texture headers and virtual rows");
+        var table = new DataTable<ComponentRow>(columns).rows(rows).rowHeight(40);
         table.getLayout().grow().height(0).minHeight(0).widthPercent(100);
-        var search = new NanoTextField("Search name, type, or ID...");
-        search.getLayout().height(38).widthPercent(100).noShrink();
-        var count = label("10,000 records / click a header to sort", 14);
-        String[] previousQuery = {""};
-        search.getEditor()
-                .onChange(
-                        () -> {
-                            String query =
-                                    search.getText().strip().toLowerCase(java.util.Locale.ROOT);
-                            if (query.equals(previousQuery[0])) return;
-                            previousQuery[0] = query;
-                            table.filter(
-                                    row ->
-                                            query.isEmpty()
-                                                    || row.name()
-                                                            .toLowerCase(java.util.Locale.ROOT)
-                                                            .contains(query)
-                                                    || row.type()
-                                                            .toLowerCase(java.util.Locale.ROOT)
-                                                            .contains(query));
-                            count.text(
-                                    table.getModel().size() + " records / click a header to sort");
-                        });
-        table.getSelection()
-                .onChange(
-                        () ->
-                                status.text(
-                                        "Selected rows: " + table.getSelection().selectedCount()));
-        var help = new NanoContainer();
-        help.getLayout().padding(10).column().gap(8);
-        help.add(
-                label(
-                        "Headers cycle ascending / descending / original order.\n"
-                                + "Shift-click selects a range; Ctrl-click toggles a row.\n"
-                                + "Only visible rows are created. Filtering or sorting clears"
-                                + " selection.",
-                        14));
-        content.add(new CollapsibleSection("Table help", help).expanded(false));
-        content.add(search);
-        content.add(count);
-        content.add(table);
+        texture.add(table);
+        layout.add(texture);
+        var vector = card("NANO DATA TABLE", "Vector headers and virtual rows");
+        var nanoTable = new NanoDataTable<ComponentRow>(columns).rows(rows).rowHeight(40);
+        nanoTable.getLayout().grow().height(0).minHeight(0).widthPercent(100);
+        vector.add(nanoTable);
+        layout.add(vector);
+        return layout;
     }
 
-    /**
-     * Creates a label for this demo with its local typography and sizing conventions; the returned
-     * node is attached by the caller.
-     */
-    private static NanoLabel label(String text, float size) {
-        var label = new NanoLabel(text);
-        label.setStyle(NanoLabel.FONT_SIZE_KEY, size);
-        return label;
+    /** Shows both tooltip implementations, the hyperlink, and both modal implementations. */
+    private void buildOverlaysPage() {
+        var scroll = pageScroll();
+        var gallery = galleryGrid();
+        scroll.setContent(gallery);
+        pageHost.add(scroll);
+
+        var tooltips = card("TOOLTIPS", "Tooltip · NanoTooltip");
+        var textureButton = new Button("Hover for texture tooltip");
+        textureButton.setTooltip(new Tooltip("Texture-backed tooltip with delayed presentation"));
+        rowHeight(textureButton, 42);
+        tooltips.add(textureButton);
+        var nanoButton = new NanoButton("Hover for vector tooltip");
+        nanoButton.setTooltip(new NanoTooltip("NanoVG tooltip with crisp vector text"));
+        rowHeight(nanoButton, 42);
+        tooltips.add(nanoButton);
+        gallery.add(tooltips);
+
+        var links = card("HYPERLINK", "NanoHyperlink · keyboard and pointer activation");
+        links.add(nanoLabel("Links validate and launch their retained destination.", 15, MUTED));
+        links.add(
+                new NanoHyperlink(
+                        "Open the Valthorne repository", "https://github.com/tehnewb/Valthorne"));
+        gallery.add(links);
+
+        var textureModal = card("MODAL", "Texture overlay · Nano content");
+        textureModal.add(nanoButton("Open texture modal", () -> openTextureModal()));
+        gallery.add(textureModal);
+
+        var nanoModal = card("NANO MODAL", "Vector overlay · texture content");
+        nanoModal.add(nanoButton("Open vector modal", () -> openNanoModal()));
+        gallery.add(nanoModal);
     }
 
-    /**
-     * Creates a UI button bound to the supplied action; the action executes through normal UI event
-     * dispatch.
-     */
-    private static NanoButton button(String text, Runnable action) {
-        var button = new NanoButton(text).action(b -> action.run());
-        size(button, 38);
+    /** Opens a texture-backed modal containing mixed renderer content. */
+    private void openTextureModal() {
+        var modal = new Modal(stage).closeOnOutsideClick(true);
+        var dialog = new NanoContainer();
+        dialog.getLayout().width(420).column().padding(24).gap(14);
+        dialog.add(nanoLabel("Texture modal", 24, theme.text));
+        dialog.add(nanoLabel("Focus is trapped here until the dialog closes.", 15, MUTED));
+        dialog.add(new NanoTextField("Try Tab, then Escape"));
+        dialog.add(nanoButton("Close dialog", modal::close));
+        modal.content(dialog).open();
+    }
+
+    /** Opens a NanoVG modal containing texture-backed controls. */
+    private void openNanoModal() {
+        var modal = new NanoModal(stage).closeOnOutsideClick(true);
+        var dialog = new Panel();
+        dialog.getLayout().width(420).column().padding(24).gap(14);
+        dialog.add(regularLabel("NanoVG modal with texture content"));
+        var field = new TextField("Focus remains inside this dialog");
+        rowHeight(field, 40);
+        dialog.add(field);
+        var close = new Button("Close dialog");
+        close.action(button -> modal.close());
+        rowHeight(close, 40);
+        dialog.add(close);
+        modal.content(dialog).open();
+    }
+
+    /** Creates the standard scroll viewport used by card-gallery pages. */
+    private NanoScrollPanel pageScroll() {
+        var scroll = new NanoScrollPanel().horizontal(false).horizontalBar(false);
+        scroll.getLayout().grow().height(0).widthPercent(100).minHeight(0);
+        return scroll;
+    }
+
+    /** Creates a responsive two-column grid for gallery cards. */
+    private NanoGrid galleryGrid() {
+        var grid = new NanoGrid().columns(2).cellHeight(270).gap(14);
+        grid.getLayout().widthPercent(100).noShrink();
+        return grid;
+    }
+
+    /** Creates an equal two-column workspace row. */
+    private NanoContainer twoColumns() {
+        var row = new NanoContainer();
+        row.getLayout().row().grow().height(0).widthPercent(100).gap(14).minHeight(0);
+        return row;
+    }
+
+    /** Creates a polished card with a title, caption, and flexible content area. */
+    private NanoPanel card(String title, String caption) {
+        var card = panel(CARD);
+        card.getLayout().column().padding(16).gap(11).grow().minWidth(0).minHeight(0);
+        card.add(nanoLabel(title, 13, ACCENT));
+        card.add(nanoLabel(caption, 13, MUTED));
+        return card;
+    }
+
+    /** Creates a Nano panel with an explicit showcase surface color. */
+    private NanoPanel panel(Color color) {
+        return new NanoPanel()
+                .backgroundColor(color)
+                .borderColor(theme.border)
+                .cornerRadius(10)
+                .borderWidth(1);
+    }
+
+    /** Creates a consistently sized Nano button and binds a simple action. */
+    private NanoButton nanoButton(String text, Runnable action) {
+        var button = new NanoButton(text).action(ignored -> action.run());
+        rowHeight(button, 40);
         return button;
     }
 
-    /** Assigns the row height and prevents the layout engine from shrinking the supplied node. */
-    private static void size(UINode node, float height) {
-        node.getLayout().height(height).noShrink();
+    /** Creates a Nano label with explicit typography for the showcase hierarchy. */
+    private NanoLabel nanoLabel(String text, float size, Color color) {
+        return new NanoLabel(text).fontSize(size).color(color);
     }
 
-    /** Clears the background; the application renders the attached UI root afterward. */
+    /** Creates a themed texture-backed label. */
+    private Label regularLabel(String text) {
+        return new Label(text).font(theme.getFont()).color(theme.text);
+    }
+
+    /** Pairs descriptive text with a compact control. */
+    private NanoContainer labeledRow(String text, UINode control) {
+        var row = new NanoContainer();
+        row.getLayout().row().height(34).itemsCenter().gap(12).noShrink();
+        var label = nanoLabel(text, 14, MUTED);
+        label.getLayout().grow();
+        row.add(label);
+        row.add(control);
+        return row;
+    }
+
+    /** Creates a simple regular tab page. */
+    private Panel regularTabPage(String text) {
+        var page = new Panel();
+        page.getLayout().column().padding(16).gap(10).grow();
+        page.add(regularLabel(text));
+        page.add(new Button("Texture action"));
+        return page;
+    }
+
+    /** Creates a simple vector tab page. */
+    private NanoPanel nanoTabPage(String text) {
+        var page = panel(SIDEBAR);
+        page.getLayout().column().padding(16).gap(10).grow();
+        page.add(nanoLabel(text, 15, theme.text));
+        page.add(new NanoButton("Vector action"));
+        return page;
+    }
+
+    /** Sets a fixed row height and opts the node out of vertical shrinking. */
+    private static void rowHeight(UINode node, float height) {
+        node.getLayout().height(height).noShrink().widthPercent(100);
+    }
+
+    /** Creates representative table data, including every component family. */
+    private static List<ComponentRow> componentRows() {
+        var rows = new ArrayList<ComponentRow>();
+        String[] texture = {
+            "Button", "Checkbox", "CollapsibleSection", "DataTable", "Grid", "Image", "Label",
+            "Modal", "Panel", "ProgressBar", "ScrollPanel", "Slider", "SplitPane", "TabbedPane",
+            "TextField", "Tooltip", "VirtualList"
+        };
+        String[] vector = {
+            "NanoButton",
+            "NanoCheckbox",
+            "NanoCollapsibleSection",
+            "NanoComboBox",
+            "NanoContainer",
+            "NanoDataTable",
+            "NanoGrid",
+            "NanoHyperlink",
+            "NanoImage",
+            "NanoLabel",
+            "NanoModal",
+            "NanoPanel",
+            "NanoProgressBar",
+            "NanoScrollPanel",
+            "NanoSlider",
+            "NanoSplitPane",
+            "NanoTabbedPane",
+            "NanoTextField",
+            "NanoTooltip",
+            "NanoVirtualList"
+        };
+        for (String name : texture) rows.add(new ComponentRow(name, "Texture", "Interactive"));
+        for (String name : vector) rows.add(new ComponentRow(name, "NanoVG", "Interactive"));
+        rows.add(new ComponentRow("SlugLabel", "Slug", "Rendered"));
+        return rows;
+    }
+
+    /** One stable row in the component inventory tables. */
+    private record ComponentRow(String name, String family, String state) {}
+
+    /** Clears behind the retained UI; the scene infrastructure draws the root afterward. */
     @Override
     public void draw(TextureBatch batch) {
-        Window.clear(lightMode ? light.surface : dark.surface);
+        Window.clear(BACKGROUND);
     }
 
-    /**
-     * Processes input and advances this demo using elapsed seconds; rendering and resource
-     * destruction remain in their lifecycle callbacks.
-     *
-     * @param delta elapsed time in seconds
-     */
+    /** Keeps the example event-driven; no separate simulation is required. */
     @Override
-    public void update(float delta) {
-        // Keep sampling every frame, independently of the slower diagnostic text refresh.
-        // Only format/update the label twice a second during interactive use.
-        if (Float.isFinite(delta) && delta > 0) {
-            fpsElapsed += delta;
-            fpsFrames++;
-            if (fpsElapsed >= .5 || smoke) {
-                long fps = Math.round(fpsFrames / fpsElapsed);
-                double milliseconds = Math.round(fpsElapsed * 10_000 / fpsFrames) / 10.0;
-                fpsLabel.text(fps + " FPS / " + milliseconds + " ms");
-                fpsElapsed = 0;
-                fpsFrames = 0;
-            }
-        }
-        diagnosticTimer += delta;
-        if (diagnosticTimer < .3f && !smoke) return;
-        diagnosticTimer = 0;
-        var stats = ui.getFrameStats();
-        String focus =
-                ui.getFocused() == null ? "none" : ui.getFocused().getClass().getSimpleName();
-        String capture =
-                ui.getCaptured() == null ? "none" : ui.getCaptured().getClass().getSimpleName();
-        diagnostics.text(
-                "FRAME DIAGNOSTICS\n\nNodes: "
-                        + stats.nodesDrawn()
-                        + "\nLayout passes: "
-                        + stats.layoutPasses()
-                        + "\nTexture calls: "
-                        + stats.textureDrawCalls()
-                        + "\nNano flushes: "
-                        + stats.nanoFlushes()
-                        + "\nBackend switches: "
-                        + stats.backendSwitches()
-                        + "\n\nFocus: "
-                        + focus
-                        + "\nCapture: "
-                        + capture
-                        + (virtualList == null
-                                ? ""
-                                : "\n\nLive cells: " + virtualList.getLiveItemCount() + " / 10000")
-                        + "\n\nInspector: "
-                        + (ui.getInspector().isEnabled() ? "on" : "off")
-                        + inspectedNode());
-    }
+    public void update(float delta) {}
 
-    /**
-     * Formats bounds and layout diagnostics for the hovered or focused node. Returns an empty
-     * string when the inspector is disabled or has no matching entry.
-     */
-    private String inspectedNode() {
-        if (!ui.getInspector().isEnabled()) return "";
-        UINode selected = ui.getHovered() != null ? ui.getHovered() : ui.getFocused();
-        for (var entry : ui.getInspector().entries())
-            if (entry.node() == selected) {
-                var b = entry.bounds();
-                StringBuilder info =
-                        new StringBuilder("\n\n")
-                                .append(entry.type())
-                                .append("\nBounds: ")
-                                .append((int) b.width())
-                                .append(" x ")
-                                .append((int) b.height())
-                                .append("\nAt: ")
-                                .append((int) b.x())
-                                .append(", ")
-                                .append((int) b.y())
-                                .append("\nClip: ")
-                                .append(
-                                        entry.clip() == null
-                                                ? "none"
-                                                : (int) entry.clip().width()
-                                                        + " x "
-                                                        + (int) entry.clip().height());
-                entry.style().entrySet().stream()
-                        .filter(e -> e.getValue() instanceof Color)
-                        .limit(3)
-                        .forEach(
-                                e -> {
-                                    Color c = (Color) e.getValue();
-                                    String key =
-                                            e.getKey().substring(e.getKey().lastIndexOf('.') + 1);
-                                    info.append("\n")
-                                            .append(key)
-                                            .append(":\n  ")
-                                            .append(
-                                                    String.format(
-                                                            "#%02X%02X%02X",
-                                                            (int) (c.r() * 255),
-                                                            (int) (c.g() * 255),
-                                                            (int) (c.b() * 255)));
-                                });
-                return info.toString();
-            }
-        return "\nHover a control to inspect.";
-    }
-
-    /** Composes the current gallery page and inspection overlays using their shared root. */
+    /** Captures every page in smoke mode and exits after the final catalog view. */
     @Override
     protected void drawScene() {
         super.drawScene();
         if (!smoke) return;
-        frame++;
-        if (frame == 3) {
-            capture("controls");
-            mixed();
-        }
-        if (frame == 6) {
-            capture("mixed");
-            largeList();
-        }
-        if (frame == 9) {
-            capture("virtual-grid");
-            controls();
-            lightMode = true;
-            ui.setTheme(lightData);
-            shell.setStyle(NanoPanel.BACKGROUND_COLOR_KEY, light.surface);
-        }
-        if (frame == 12) {
-            capture("light");
-            showModal(true);
-        }
-        if (frame == 15) {
-            capture("modal");
-            JGL.publish(new valthorne.event.events.KeyPressEvent(Keyboard.ESCAPE, 0));
-            advanced();
-        }
-        if (frame == 18) {
-            capture("workspace");
-            dataTools();
-        }
-        if (frame == 21) {
-            capture("data-tools");
+        smokeFrame++;
+        if (smokeFrame % 3 != 0) return;
+        capture(currentPage);
+        int next = currentPage.ordinal() + 1;
+        if (next >= Page.values().length) {
             Window.requestClose();
+        } else {
+            show(Page.values()[next]);
+            ui.layout();
         }
     }
 
-    /**
-     * Captures the current demo frame or state for its documented workflow; capture-specific
-     * overloads choose the output name.
-     */
-    private void capture(String name) {
-        FrameCapture.save(Path.of("build/ui-showcase", name + ".png"));
+    /** Writes one deterministic smoke image named after its catalog page. */
+    private static void capture(Page page) {
+        FrameCapture.save(
+                Path.of(
+                        "build/ui-showcase",
+                        page.name().toLowerCase(java.util.Locale.ROOT) + ".png"));
     }
 
-    /**
-     * Releases application-owned rendering, UI and simulation resources before Valthorne destroys
-     * the graphics context.
-     */
+    /** Destroys UI borrowers before releasing all graphics resources owned by this scene. */
     @Override
     public void dispose() {
         disposeScene();
-        if (previewTexture != null) {
-            previewTexture.dispose();
-            previewTexture = null;
-        }
-        if (dark != null) dark.close();
-        if (light != null) light.close();
+        if (slugFont != null) slugFont.dispose();
+        if (previewTexture != null) previewTexture.dispose();
+        if (previewData != null) previewData.dispose();
+        if (theme != null) theme.close();
     }
 }
