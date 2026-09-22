@@ -66,6 +66,18 @@ demos.each { taskName, exampleId ->
         doFirst { setArgs([exampleId] + new ArrayList(args)) }
     }
 }
+tasks.register('runLdtkPlatformer', JavaExec) {
+    group = 'examples'
+    description = 'Launches the large LDtk platformer world with scrolling and zooming.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'valthorne.examples.ldtk.LdtkPlatformerExample'
+}
+tasks.register('runTiledPlatformer', JavaExec) {
+    group = 'examples'
+    description = 'Launches the matching Tiled platformer world with scrolling and zooming.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'valthorne.examples.tiled.TiledPlatformerExample'
+}
 tasks.register('listExamples', JavaExec) {
     group = 'examples'
     description = 'Lists demos and platform requirements without opening a window.'

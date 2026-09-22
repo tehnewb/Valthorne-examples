@@ -41,8 +41,8 @@ import java.util.function.Consumer;
  * acoustic simulation. The listener is independent of the viewing camera. Input, scene changes and
  * player lifetime are coordinated by the application callbacks.
  *
- * <p>Run through {@link valthorne.examples.launcher.ExampleLauncher} for help, validated options
- * and platform checks. Study the accompanying <a
+ * <p>Run through the documented Gradle task for validated options and platform checks. Study the
+ * accompanying <a
  * href="https://github.com/tehnewb/Valthorne-examples/blob/main/docs/audio.md">example
  * walkthrough</a> for controls, code navigation and extension exercises.
  */

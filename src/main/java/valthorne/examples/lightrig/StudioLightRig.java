@@ -74,7 +74,7 @@ public final class StudioLightRig {
     private Scene3D scene;
     private Light selected;
     private int nextId = 1;
-    private boolean updating, placing, listDirty = true;
+    private boolean updating, placing, listDirty = true, enabled = true;
     private Runnable onChange = () -> {};
 
     /**
@@ -491,12 +491,25 @@ public final class StudioLightRig {
     }
 
     /** Synchronizes one light's model material with its color, power and enabled state. */
-    private static void apply(Light light) {
+    private void apply(Light light) {
         light.model
                 .getMaterial()
                 .setTint(light.color)
                 .setEmissive(light.color)
-                .setEmissionStrength(light.enabled ? light.power : 0);
+                .setEmissionStrength(enabled && light.enabled ? light.power : 0);
+    }
+
+    /** Enables or suppresses the complete rig without losing individual light settings. */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+        for (var light : lights) apply(light);
+        message(enabled ? "Lighting enabled." : "Lighting disabled.");
+        onChange.run();
+    }
+
+    /** Returns whether this rig currently emits light. */
+    public boolean isEnabled() {
+        return enabled;
     }
 
     /**

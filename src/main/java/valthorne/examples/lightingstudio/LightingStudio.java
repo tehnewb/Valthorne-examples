@@ -38,8 +38,8 @@ import java.util.function.DoubleConsumer;
  * renderer resources belong to the current context. Light edits update retained instances; history
  * snapshots copy state before mutation. Saves and captures remain under build output.
  *
- * <p>Run through {@link valthorne.examples.launcher.ExampleLauncher} for help, validated options
- * and platform checks. Study the accompanying <a
+ * <p>Run through the documented Gradle task for validated options and platform checks. Study the
+ * accompanying <a
  * href="https://github.com/tehnewb/Valthorne-examples/blob/main/docs/lighting-studio.md">example
  * walkthrough</a> for controls, code navigation and extension exercises.
  */

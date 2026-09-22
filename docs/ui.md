@@ -1,6 +1,6 @@
 # UI component gallery
 
-Explore every concrete element in the current Valthorne UI library through five focused pages. The gallery covers texture-backed, NanoVG and Slug rendering while demonstrating that all three paths share layout, focus, clipping and pointer ownership.
+Explore every concrete element in the Valthorne 2.2 UI library through a dedicated feature page. Texture-backed and NanoVG counterparts are paired so their shared behavior and renderer-specific styling can be compared directly; Slug typography and Nano-only controls receive focused coverage too.
 
 **Requires:** OpenGL 3.3. See [platform support](platforms.md).
 
@@ -18,11 +18,11 @@ native access and macOS first-thread flags where applicable.
 
 ## Controls
 
-- Use the left navigation to open Foundations, Inputs, Navigation, Data or Overlays.
+- Use the scrolling left navigation to choose an element family such as Button/NanoButton, Grid/NanoGrid or DataTable/NanoDataTable.
 - **Inspect layout**: toggle live bounds visualization for the retained UI tree.
 - **Tab / Shift+Tab**: move keyboard focus. **Enter / Space**: activate the focused control.
 - **Arrow keys**: adjust focused sliders and split dividers. **Escape**: dismiss a modal.
-- Click table headers to sort; scroll the 5,000-row lists to observe bounded live-node counts.
+- Every page contains live controls for the element's available states, orientations, callbacks, styling and data modes.
 
 ## Read the implementation
 
@@ -30,27 +30,25 @@ Start at [UIShowcase.java](../src/main/java/valthorne/examples/ui/UIShowcase.jav
 Its Javadoc describes the lifecycle and helper contracts. Generate the full reference
 with `./gradlew javadoc`.
 
-1. `init` creates the professional theme, shared preview image, Slug font and permanent application shell.
-2. `show` clears the previous page and dispatches to one small page builder.
-3. Foundations demonstrates containers, labels, images, grids, mixed rendering and cached/live Slug text.
-4. Inputs pairs both renderer families so their buttons, fields, checkboxes, sliders and progress bars can be compared directly.
-5. Navigation presents both implementations of scrolling, collapsible sections, tabs and split panes.
-6. Data exercises both virtual-list and sortable-table implementations with realistic collections.
-7. Overlays demonstrates both tooltip and modal paths plus `NanoHyperlink` activation.
+1. `init` creates the professional theme, two preview images, Slug font and permanent application shell.
+2. `buildNavigation` creates one left-rail destination for each element family.
+3. `show` destroys the old feature page and dispatches to the selected element builder.
+4. Each `*Page` method explicitly constructs all important modes for that element: states, callbacks, geometry, styling, orientation, selection, filtering or virtualization as applicable.
+5. Small helpers at the end contain only repeated presentation conventions such as cards, sizing and sample content.
 
-The helper methods at the end of the class contain only repeated presentation conventions—card surfaces, typography and sizing—so each component example remains explicit and easy to copy.
+The source intentionally keeps component configuration visible rather than hiding it behind factories, making each page useful as copyable API documentation.
 
 ## Modes and outputs
 
-`--smoke` visits every page, captures the rendered state and exits. No benchmark flag is provided.
+`--smoke` visits all 18 element pages, captures each rendered state and exits. No benchmark flag is provided.
 
-Smoke captures are written under `build/ui-showcase/` as `foundations.png`, `inputs.png`, `navigation.png`, `data.png` and `overlays.png`. See the checked-in illustration below.
+Smoke captures are written under `build/ui-showcase/` using the page names, including `buttons.png`, `grids.png`, `virtual_lists.png` and `modals.png`. See the checked-in illustration below.
 
 ![UI data tools](images/ui.png)
 
 ## Extend it
 
-Add a component to the page matching its behavior, then include its name in `componentRows` so the inventory table remains auditable. Verify keyboard focus, scrolling, clipping and modal capture after changing nesting.
+When an element gains a feature, add a visible state or interaction to its page and document the behavior beside it. When adding an entirely new element, add a navigation entry, a page builder and a smoke capture before updating the checked-in screenshot.
 
 Use [architecture and ownership](architecture.md) when extracting code into your
 game. Run the affected smoke/validation checks after edits; [verification](verification.md)

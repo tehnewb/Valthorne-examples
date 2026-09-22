@@ -36,8 +36,8 @@ import javax.imageio.ImageIO;
  * instances borrow geometry/material data. Input and all rendering stay on the application thread;
  * positions use the engine's Z-up world convention.
  *
- * <p>Run through {@link valthorne.examples.launcher.ExampleLauncher} for help, validated options
- * and platform checks. Study the accompanying <a
+ * <p>Run through the documented Gradle task for validated options and platform checks. Study the
+ * accompanying <a
  * href="https://github.com/tehnewb/Valthorne-examples/blob/main/docs/scene.md">example
  * walkthrough</a> for controls, code navigation and extension exercises.
  */

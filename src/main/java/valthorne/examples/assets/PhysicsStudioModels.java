@@ -241,9 +241,7 @@ public final class PhysicsStudioModels implements AutoCloseable {
             throw new IllegalStateException("Missing gallery material groups: " + source);
         for (Model3D.Triangle triangle : model.getTriangles()) {
             for (Vector3f normal :
-                    new Vector3f[] {
-                        triangle.getNormalA(), triangle.getNormalB(), triangle.getNormalC()
-                    }) {
+                    new Vector3f[] {triangle.normalA(), triangle.normalB(), triangle.normalC()}) {
                 if (!normal.isFinite() || Math.abs(normal.lengthSquared() - 1) > 1e-4f)
                     throw new IllegalStateException("Invalid gallery surface normal: " + source);
             }

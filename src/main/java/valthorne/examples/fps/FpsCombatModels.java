@@ -225,12 +225,12 @@ public final class FpsCombatModels implements AutoCloseable {
         try (FpsCombatModels library = new FpsCombatModels()) {
             for (Entry entry : library.entries()) {
                 for (Model3D.Triangle t : entry.model().getTriangles()) {
-                    if (!t.getA().isFinite()
-                            || !t.getB().isFinite()
-                            || !t.getC().isFinite()
-                            || !unit(t.getNormalA())
-                            || !unit(t.getNormalB())
-                            || !unit(t.getNormalC()))
+                    if (!t.a().isFinite()
+                            || !t.b().isFinite()
+                            || !t.c().isFinite()
+                            || !unit(t.normalA())
+                            || !unit(t.normalB())
+                            || !unit(t.normalC()))
                         throw new IllegalStateException("Invalid combat surface: " + entry.name());
                 }
                 System.out.printf(

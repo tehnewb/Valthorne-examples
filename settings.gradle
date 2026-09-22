@@ -1,1 +1,10 @@
 rootProject.name = 'Valthorne-examples'
+
+def localValthorne = providers.gradleProperty('valthorneDir').orNull
+if (localValthorne) {
+    includeBuild(file(localValthorne)) {
+        dependencySubstitution {
+            substitute module('io.github.tehnewb:Valthorne') using project(':')
+        }
+    }
+}

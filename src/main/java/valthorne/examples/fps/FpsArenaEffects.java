@@ -168,7 +168,7 @@ final class FpsArenaEffects implements AutoCloseable {
 
     /** Faces the shared XY quad toward the camera after physical pose synchronization. */
     void faceCamera(Vector3f forward, Vector3f up) {
-        facing.identity().lookAlong(forward, up).conjugate();
+        facing.rotationTo(0, 0, 1, -forward.x, -forward.y, -forward.z);
         faceCamera(debris);
         faceCamera(flares);
     }

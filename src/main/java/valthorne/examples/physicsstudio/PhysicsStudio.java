@@ -3,11 +3,13 @@
 package valthorne.examples.physicsstudio;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.nanovg.NanoVG.*;
 import static org.lwjgl.opengl.GL43.*;
 
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.primitives.Rayf;
+import org.lwjgl.nanovg.NVGPaint;
 
 import valthorne.*;
 import valthorne.camera.OrbitCameraController;
@@ -22,6 +24,7 @@ import valthorne.examples.shared.FrameCapture;
 import valthorne.graphics.Color;
 import valthorne.graphics.model.*;
 import valthorne.math.physics.*;
+import valthorne.ui.NanoUtility;
 import valthorne.ui.UIContainer;
 import valthorne.ui.UINode;
 import valthorne.ui.UIRoot;
@@ -33,8 +36,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 /**
- * A combined simulation editor with pyramid, domino, stress, imported-model gallery and
- * particle-fountain scenarios, plus a reusable editable light rig.
+ * A combined simulation editor with fourteen focused labs spanning every current three-dimensional
+ * physics feature, plus raycast interaction, live contact telemetry and an editable light rig.
  *
  * <h2>Lifecycle and ownership</h2>
  *
@@ -42,12 +45,89 @@ import java.util.*;
  * meshes while replacing scenario worlds. Emitters close before their borrowed world; listeners
  * detach during disposal. Scene gestures begin only after UI routing decides ownership.
  *
- * <p>Run through {@link valthorne.examples.launcher.ExampleLauncher} for help, validated options
- * and platform checks. Study the accompanying <a
+ * <p>Run through the documented Gradle task for validated options and platform checks. Study the
+ * accompanying <a
  * href="https://github.com/tehnewb/Valthorne-examples/blob/main/docs/physics-studio.md">example
  * walkthrough</a> for controls, code navigation and extension exercises.
  */
 public final class PhysicsStudio implements Application {
+    /** Dark, input-stable gradient surface used for the studio's major chrome regions. */
+    private static final class GradientPanel extends NanoPanel {
+        private final NVGPaint paint = NVGPaint.create();
+
+        /** Creates a transparent standard panel over a custom vertical gradient. */
+        private GradientPanel() {
+            var clear = new Color(0, 0, 0, 0);
+            backgroundColor(clear);
+            hoverBackgroundColor(clear);
+            focusedBackgroundColor(clear);
+            pressedBackgroundColor(clear);
+            disabledBackgroundColor(clear);
+            borderWidth(0);
+            setStyle(BACKGROUND_COLOR_KEY, clear);
+            setStyle(HOVER_BACKGROUND_COLOR_KEY, clear);
+            setStyle(FOCUSED_BACKGROUND_COLOR_KEY, clear);
+            setStyle(PRESSED_BACKGROUND_COLOR_KEY, clear);
+            setStyle(DISABLED_BACKGROUND_COLOR_KEY, clear);
+            setStyle(BORDER_WIDTH_KEY, 0f);
+        }
+
+        /** Paints the gradient first, then delegates child rendering to the normal panel path. */
+        @Override
+        public void draw(long vg) {
+            float x = getAbsoluteX(), y = getAbsoluteY(), w = getWidth(), h = getHeight();
+            nvgLinearGradient(
+                    vg,
+                    x,
+                    y,
+                    x + w * .35f,
+                    y + h,
+                    NanoUtility.color1(new Color(.055f, .075f, .13f, .98f)),
+                    NanoUtility.color2(new Color(.018f, .025f, .055f, .98f)),
+                    paint);
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg, x, y, w, h, 11);
+            nvgFillPaint(vg, paint);
+            nvgFill(vg);
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg, x + .5f, y + .5f, w - 1, h - 1, 10.5f);
+            nvgStrokeWidth(vg, 1);
+            nvgStrokeColor(vg, NanoUtility.color1(new Color(.18f, .38f, .58f, .7f)));
+            nvgStroke(vg);
+            super.draw(vg);
+        }
+    }
+
+    private static final int BALL_PIT = 0;
+    private static final int SHAPES = 1;
+    private static final int MATERIALS = 2;
+    private static final int FORCES = 3;
+    private static final int BODY_BEHAVIOR = 4;
+    private static final int KINEMATICS = 5;
+    private static final int SENSORS = 6;
+    private static final int LAYERS = 7;
+    private static final int JOINTS = 8;
+    private static final int CCD_RAYCAST = 9;
+    private static final int DOMINOES = 10;
+    private static final int STRESS = 11;
+    private static final int GALLERY = 12;
+    private static final int PARTICLES = 13;
+    private static final List<String> SCENARIO_NAMES =
+            List.of(
+                    "Ball pit / dynamic spheres",
+                    "Collision shape gallery",
+                    "Friction + restitution lab",
+                    "Forces + impulses + torque",
+                    "Damping + gravity + sleep",
+                    "Kinematic moving platforms",
+                    "Sensors + contact events",
+                    "Collision layer filtering",
+                    "Distance joints + chains",
+                    "CCD cannon + raycasting",
+                    "Dominoes + rolling ramp",
+                    "Stress / 288 mixed bodies",
+                    "Mesh + convex hull gallery",
+                    "Particle fountain / Jolt");
     private final Scene3D scene = new Scene3D();
     private final PerspectiveCamera camera = new PerspectiveCamera();
     private final OrbitCameraController orbit = new OrbitCameraController();
@@ -132,19 +212,21 @@ public final class PhysicsStudio implements Application {
             };
     private PhysicsWorld3D physics;
     private FilamentRenderer3D renderer;
-    private Model3D cube, sphere, domino, ground, platformMesh;
+    private Model3D cube, sphere, cylinder, domino, ground, platformMesh;
     private UIRoot ui;
     private ProfessionalTheme theme;
     private NanoPanel header, controls, footer;
     private NanoContainer spawnDeck, standardSpawn, particleControls;
     private NanoLabel stats, simulation;
     private NanoButton pause, focusModel;
-    private int width, height, vw, vh, frames, scenario = 3, initialLights = 3;
+    private int width, height, vw, vh, frames, scenario = BALL_PIT, initialLights = 3;
     private float speed = 1, gravity = 9.81f, restitution = .25f, mass = 2;
     private float environmentPower = 100;
     private float lastX, lastY, clock, physicsMs, renderMs, reportClock;
     private int reportFrames;
     private boolean paused, benchmark, smoke;
+    private boolean lightingEnabled = true;
+    private int contactAdded, contactPersisted, contactRemoved;
     private boolean visualParticles;
     private float particleRate = 48;
     private final double[] renderSamples = new double[240], physicsSamples = new double[240];
@@ -170,8 +252,9 @@ public final class PhysicsStudio implements Application {
             if (a.startsWith("--particle-rate="))
                 app.particleRate = Float.parseFloat(a.substring(16));
         }
-        if (app.scenario < 0 || app.scenario > 4)
-            throw new IllegalArgumentException("Scenario must be between 0 and 4");
+        if (app.scenario < 0 || app.scenario >= SCENARIO_NAMES.size())
+            throw new IllegalArgumentException(
+                    "Scenario must be between 0 and " + (SCENARIO_NAMES.size() - 1));
         if (!Float.isFinite(app.particleRate) || app.particleRate < 0 || app.particleRate > 120)
             throw new IllegalArgumentException("Particle rate must be between 0 and 120");
         if (app.initialLights < 3 || app.initialLights > StudioLightRig.MAX_LIGHTS)
@@ -199,6 +282,7 @@ public final class PhysicsStudio implements Application {
         glfwSetWindowSizeLimits(Window.getAddress(), 1440, 960, GLFW_DONT_CARE, GLFW_DONT_CARE);
         cube = ModelBuilder3D.box(1, 1, 1);
         sphere = ModelBuilder3D.sphere(.5f, 24, 16);
+        cylinder = ModelBuilder3D.cylinder(.5f, 1.4f, 24);
         domino = ModelBuilder3D.box(.22f, .8f, 1.6f);
         ground = ModelBuilder3D.box(24, 20, 1);
         platformMesh = ModelBuilder3D.box(3, 3, .4f);
@@ -219,6 +303,16 @@ public final class PhysicsStudio implements Application {
         theme = new ProfessionalTheme(false, 1);
         ui.setTheme(theme.create());
         rig = new StudioLightRig(theme);
+        var rigSurface = new Color(.045f, .065f, .105f, .98f);
+        var rigBorder = new Color(.18f, .38f, .58f, .7f);
+        rig.panel.setStyle(NanoPanel.BACKGROUND_COLOR_KEY, rigSurface);
+        rig.panel.setStyle(NanoPanel.HOVER_BACKGROUND_COLOR_KEY, rigSurface);
+        rig.panel.setStyle(NanoPanel.FOCUSED_BACKGROUND_COLOR_KEY, rigSurface);
+        rig.panel.setStyle(NanoPanel.PRESSED_BACKGROUND_COLOR_KEY, rigSurface);
+        rig.panel.setStyle(NanoPanel.BORDER_COLOR_KEY, rigBorder);
+        rig.panel.setStyle(NanoPanel.HOVER_BORDER_COLOR_KEY, rigBorder);
+        rig.panel.setStyle(NanoPanel.FOCUSED_BORDER_COLOR_KEY, rigBorder);
+        rig.panel.setStyle(NanoPanel.PRESSED_BORDER_COLOR_KEY, rigBorder);
         rig.attach(scene);
         while (rig.size() < initialLights) {
             int i = rig.size() - 3;
@@ -298,8 +392,21 @@ public final class PhysicsStudio implements Application {
         gesture = 0;
         random.setSeed(42);
         clock = 0;
-        physics = new PhysicsWorld3D();
+        contactAdded = contactPersisted = contactRemoved = 0;
+        if (scenario == LAYERS) {
+            var layers = new CollisionLayers3D();
+            layers.setCollision(1, 2, false);
+            physics = new PhysicsWorld3D(PhysicsWorld3D.Settings.defaults(), layers);
+        } else physics = new PhysicsWorld3D();
         physics.setGravity(new Vector3f(0, 0, -gravity));
+        physics.addContactListener(
+                event -> {
+                    switch (event.type()) {
+                        case ADDED -> contactAdded++;
+                        case PERSISTED -> contactPersisted++;
+                        case REMOVED -> contactRemoved++;
+                    }
+                });
         body(ground, CollisionShape3D.box(24, 20, 1), MotionType3D.STATIC, 0, 0, -.5f, 3);
         // Inlaid floor markings share one cube mesh and have no collision overhead.
         for (int i = -10; i <= 10; i += 2) {
@@ -313,100 +420,291 @@ public final class PhysicsStudio implements Application {
                                             .setTint(new Color(.28f, .34f, .4f, 1))
                                             .setRoughness(.8f)));
         }
-        if (scenario == 0) {
-            for (int row = 0; row < 3; row++)
-                for (int level = 0; level < 6; level++)
-                    for (int col = 0; col < 6 - level; col++)
-                        body(
-                                cube,
-                                CollisionShape3D.box(1, 1, 1),
-                                MotionType3D.DYNAMIC,
-                                col - (5 - level) * .5f,
-                                row * 1.1f,
-                                .52f + level * 1.01f,
-                                level + row);
-            var lift =
-                    body(
-                            platformMesh,
-                            CollisionShape3D.box(3, 3, .4f),
-                            MotionType3D.KINEMATIC,
-                            5,
-                            1,
-                            .5f,
-                            0);
-            for (int i = 0; i < 4; i++)
-                body(
-                        sphere,
-                        CollisionShape3D.sphere(.5f),
-                        MotionType3D.DYNAMIC,
-                        4.5f + i % 2,
-                        .5f + i / 2,
-                        2 + i * .6f,
-                        1);
-            Vector3f liftPosition = new Vector3f();
-            Quaternionf liftRotation = new Quaternionf();
-            physics.addBeforeStepListener(
-                    w -> {
-                        clock += w.getFixedTimeStep();
-                        lift.moveKinematic(
-                                liftPosition.set(5, 1, 1 + .65f * (float) Math.sin(clock)),
-                                liftRotation);
-                    });
-        } else if (scenario == 1) {
-            for (int i = 0; i < 42; i++)
-                body(
-                        domino,
-                        CollisionShape3D.box(.22f, .8f, 1.6f),
-                        MotionType3D.DYNAMIC,
-                        -7 + (i % 14) * 1.05f,
-                        -2 + (i / 14) * 2,
-                        .81f,
-                        i / 14);
-            var ramp =
-                    body(
-                            platformMesh,
-                            CollisionShape3D.box(3, 3, .4f),
-                            MotionType3D.STATIC,
-                            -5,
-                            5,
-                            1.2f,
-                            3);
-            ramp.setTransform(
-                    new Vector3f(-5, 5, 1.2f), new Quaternionf().rotationAxis(.3f, 0, 1, 0));
-            for (int i = 0; i < 3; i++)
-                body(
-                        sphere,
-                        CollisionShape3D.sphere(.5f),
-                        MotionType3D.DYNAMIC,
-                        -5.7f,
-                        4.2f + i * .8f,
-                        2.4f,
-                        1);
-        } else if (scenario == 2) {
-            for (int z = 0; z < 8; z++)
-                for (int y = 0; y < 6; y++)
-                    for (int x = 0; x < 6; x++)
-                        body(
-                                (x + y + z) % 2 == 0 ? cube : sphere,
-                                (x + y + z) % 2 == 0
-                                        ? CollisionShape3D.box(1, 1, 1)
-                                        : CollisionShape3D.sphere(.5f),
-                                MotionType3D.DYNAMIC,
-                                (x - 2.5f) * 1.2f,
-                                (y - 2.5f) * 1.2f,
-                                1 + z * 1.15f,
-                                x + y + z);
+        switch (scenario) {
+            case BALL_PIT -> buildBallPit();
+            case SHAPES -> buildShapeGallery();
+            case MATERIALS -> buildMaterialLab();
+            case FORCES -> buildForceLab();
+            case BODY_BEHAVIOR -> buildBodyBehaviorLab();
+            case KINEMATICS -> buildKinematicLab();
+            case SENSORS -> buildSensorLab();
+            case LAYERS -> buildLayerLab();
+            case JOINTS -> buildJointLab();
+            case CCD_RAYCAST -> buildCcdLab();
+            case DOMINOES -> buildDominoLab();
+            case STRESS -> buildStressLab();
+            case GALLERY -> buildGallery();
+            case PARTICLES -> buildParticleLab();
+            default -> throw new AssertionError("Unknown scenario " + scenario);
         }
-        if (scenario == 3) buildGallery();
-        if (scenario == 4) buildParticleLab();
         if (spawnDeck != null) {
             spawnDeck.clear();
-            spawnDeck.add(scenario == 4 ? particleControls : standardSpawn);
+            spawnDeck.add(scenario == PARTICLES ? particleControls : standardSpawn);
         }
         if (rig != null) rig.attach(scene);
         if (focusModel != null)
-            focusModel.setEnabled(scenario == 3 && modelList.getSelectedIndex() < 3);
+            focusModel.setEnabled(scenario == GALLERY && modelList.getSelectedIndex() < 3);
         physics.optimizeBroadPhase();
+    }
+
+    /** Builds a walled basin filled with seeded, continuously colliding dynamic spheres. */
+    private void buildBallPit() {
+        particleObstacle(0, 5, 1.5f, 12, .4f, 3, 0, 3);
+        particleObstacle(0, -5, 1.5f, 12, .4f, 3, 0, 3);
+        particleObstacle(-6, 0, 1.5f, .4f, 10, 3, 0, 3);
+        particleObstacle(6, 0, 1.5f, .4f, 10, 3, 0, 3);
+        for (int i = 0; i < 112; i++)
+            body(
+                    sphere,
+                    CollisionShape3D.sphere(.5f),
+                    MotionType3D.DYNAMIC,
+                    random.nextFloat() * 10 - 5,
+                    random.nextFloat() * 8 - 4,
+                    1 + i / 24f,
+                    i);
+    }
+
+    /** Demonstrates every moving convex shape plus the static triangle-mesh shape. */
+    private void buildShapeGallery() {
+        body(cube, CollisionShape3D.box(1, 1, 1), MotionType3D.DYNAMIC, -5, 0, 5, 0);
+        body(sphere, CollisionShape3D.sphere(.5f), MotionType3D.DYNAMIC, -3, 0, 5, 1);
+        body(cylinder, CollisionShape3D.cylinder(.5f, 1.4f), MotionType3D.DYNAMIC, -1, 0, 5, 2);
+        body(cylinder, CollisionShape3D.capsule(.5f, .7f), MotionType3D.DYNAMIC, 1, 0, 5, 3);
+        body(
+                gallery.entries().getFirst().model(),
+                galleryHulls.getFirst(),
+                MotionType3D.DYNAMIC,
+                3,
+                0,
+                5,
+                0);
+        var entry = gallery.entries().get(1);
+        var mesh = new ModelInstance3D().setModel(entry.model()).setMaterial(entry.material());
+        physics.createBody(
+                        new BodySettings3D(
+                                        CollisionShape3D.mesh(entry.model()), MotionType3D.STATIC)
+                                .setPosition(5, 0, 0))
+                .bind(mesh);
+        scene.add(mesh);
+    }
+
+    /** Compares low, medium and high friction against three restitution coefficients. */
+    private void buildMaterialLab() {
+        for (int i = 0; i < 3; i++) {
+            float x = -5 + i * 5;
+            particleObstacle(x, 1, 2.2f, 3.8f, 4, .25f, -.35f, i);
+            customBody(
+                    sphere,
+                    new BodySettings3D(CollisionShape3D.sphere(.5f), MotionType3D.DYNAMIC)
+                            .setPosition(x - 1, 1, 5)
+                            .setFriction(i * .6f),
+                    i);
+            customBody(
+                    sphere,
+                    new BodySettings3D(CollisionShape3D.sphere(.5f), MotionType3D.DYNAMIC)
+                            .setPosition(x, -3, 6)
+                            .setRestitution(i * .5f),
+                    i + 1);
+        }
+    }
+
+    /** Applies velocity, impulses, force and torque so their different effects are visible. */
+    private void buildForceLab() {
+        var velocity = body(cube, CollisionShape3D.box(1, 1, 1), MotionType3D.DYNAMIC, -5, 0, 2, 0);
+        velocity.setLinearVelocity(0, 3, 4);
+        var impulse =
+                body(cube, CollisionShape3D.box(1, 1, 1), MotionType3D.DYNAMIC, -2.5f, 0, 2, 1);
+        impulse.addImpulse(new Vector3f(0, 6, 8));
+        var point = body(cube, CollisionShape3D.box(1, 1, 1), MotionType3D.DYNAMIC, 0, 0, 2, 2);
+        point.addImpulse(new Vector3f(0, 8, 4), new Vector3f(.5f, 0, 2.5f));
+        var angular =
+                body(cube, CollisionShape3D.box(1, 1, 1), MotionType3D.DYNAMIC, 2.5f, 0, 2, 3);
+        angular.addAngularImpulse(new Vector3f(0, 0, 8));
+        var forced = body(cube, CollisionShape3D.box(1, 1, 1), MotionType3D.DYNAMIC, 5, 0, 2, 0);
+        physics.addBeforeStepListener(
+                world -> {
+                    forced.addForce(new Vector3f(0, 8, 16));
+                    forced.addTorque(new Vector3f(0, 0, 5));
+                });
+    }
+
+    /** Shows damping, gravity scaling, rotation locking and sleeping policy side by side. */
+    private void buildBodyBehaviorLab() {
+        float[] gravityFactors = {0, .35f, 1, 2};
+        for (int i = 0; i < gravityFactors.length; i++)
+            customBody(
+                    sphere,
+                    new BodySettings3D(CollisionShape3D.sphere(.5f), MotionType3D.DYNAMIC)
+                            .setPosition(-4.5f + i * 3, 2, 6)
+                            .setGravityFactor(gravityFactors[i])
+                            .setDamping(i * .4f, i * .4f),
+                    i);
+        customBody(
+                cube,
+                new BodySettings3D(CollisionShape3D.box(1, 1, 1), MotionType3D.DYNAMIC)
+                        .setPosition(-2, -3, 5)
+                        .setRotationLocked(true),
+                1);
+        customBody(
+                cube,
+                new BodySettings3D(CollisionShape3D.box(1, 1, 1), MotionType3D.DYNAMIC)
+                        .setPosition(2, -3, 5)
+                        .setAllowSleeping(false),
+                2);
+    }
+
+    /** Moves kinematic platforms each fixed step while dynamic passengers respond physically. */
+    private void buildKinematicLab() {
+        var left =
+                body(
+                        platformMesh,
+                        CollisionShape3D.box(3, 3, .4f),
+                        MotionType3D.KINEMATIC,
+                        -4,
+                        0,
+                        2,
+                        0);
+        var right =
+                body(
+                        platformMesh,
+                        CollisionShape3D.box(3, 3, .4f),
+                        MotionType3D.KINEMATIC,
+                        4,
+                        0,
+                        3,
+                        2);
+        for (int i = 0; i < 12; i++)
+            body(
+                    i % 2 == 0 ? cube : sphere,
+                    i % 2 == 0 ? CollisionShape3D.box(1, 1, 1) : CollisionShape3D.sphere(.5f),
+                    MotionType3D.DYNAMIC,
+                    i < 6 ? -4 : 4,
+                    (i % 6 - 3) * .7f,
+                    4 + i % 3,
+                    i);
+        physics.addBeforeStepListener(
+                world -> {
+                    float t = world.getStepCount() * world.getFixedTimeStep();
+                    left.moveKinematic(
+                            new Vector3f(-4, 0, 2 + (float) Math.sin(t) * 1.5f), new Quaternionf());
+                    right.moveKinematic(
+                            new Vector3f(4 + (float) Math.sin(t * .7f) * 2, 0, 3),
+                            new Quaternionf().rotationZ(t * .2f));
+                });
+    }
+
+    /** Creates non-solid sensor volumes and falling bodies that generate contact events. */
+    private void buildSensorLab() {
+        for (int i = 0; i < 3; i++) {
+            float x = (i - 1) * 4;
+            customBody(
+                    cube,
+                    new BodySettings3D(CollisionShape3D.box(3, 3, 1), MotionType3D.STATIC)
+                            .setPosition(x, 0, 2 + i)
+                            .setSensor(true),
+                    i);
+            for (int j = 0; j < 5; j++)
+                body(
+                        sphere,
+                        CollisionShape3D.sphere(.5f),
+                        MotionType3D.DYNAMIC,
+                        x,
+                        0,
+                        7 + j,
+                        i + j);
+        }
+    }
+
+    /** Demonstrates custom collision filtering: layer one and two ignore one another. */
+    private void buildLayerLab() {
+        for (int i = 0; i < 12; i++)
+            customBody(
+                    sphere,
+                    new BodySettings3D(CollisionShape3D.sphere(.5f), MotionType3D.DYNAMIC)
+                            .setPosition(i % 2 == 0 ? -4 : 4, 0, 2 + i * .7f)
+                            .setLinearVelocity(i % 2 == 0 ? 7 : -7, 0, 0)
+                            .setLayer(i % 2 + 1),
+                    i % 2);
+    }
+
+    /** Connects a static anchor and dynamic links with distance constraints. */
+    private void buildJointLab() {
+        var anchor = body(cube, CollisionShape3D.box(1, 1, 1), MotionType3D.STATIC, 0, 0, 8, 3);
+        RigidBody3D previous = anchor;
+        for (int i = 0; i < 10; i++) {
+            var link =
+                    body(
+                            sphere,
+                            CollisionShape3D.sphere(.5f),
+                            MotionType3D.DYNAMIC,
+                            0,
+                            0,
+                            7 - i,
+                            i);
+            physics.createDistanceJoint(previous, link, new Vector3f(), new Vector3f(), .8f, 1.15f);
+            previous = link;
+        }
+    }
+
+    /** Fires discrete and continuous fast bodies toward thin walls for a CCD comparison. */
+    private void buildCcdLab() {
+        particleObstacle(0, 0, 2, .15f, 10, 4, 0, 3);
+        for (int i = 0; i < 10; i++)
+            customBody(
+                    sphere,
+                    new BodySettings3D(CollisionShape3D.sphere(.22f), MotionType3D.DYNAMIC)
+                            .setPosition(-9, -4 + i * .9f, 2)
+                            .setLinearVelocity(65, 0, 0)
+                            .setContinuousCollision(i >= 5),
+                    i >= 5 ? 0 : 1);
+    }
+
+    /** Builds a rolling-ball ramp followed by a long domino chain. */
+    private void buildDominoLab() {
+        particleObstacle(-6, -3, 3, 7, 2, .3f, -.35f, 0);
+        body(sphere, CollisionShape3D.sphere(.5f), MotionType3D.DYNAMIC, -8, -3, 6, 1);
+        for (int i = 0; i < 45; i++)
+            body(
+                    domino,
+                    CollisionShape3D.box(.22f, .8f, 1.6f),
+                    MotionType3D.DYNAMIC,
+                    -4 + i * .35f,
+                    -1 + (float) Math.sin(i * .18f) * 2,
+                    .8f,
+                    i);
+    }
+
+    /** Creates a dense mixed-body stack for broad-phase and solver profiling. */
+    private void buildStressLab() {
+        for (int z = 0; z < 8; z++)
+            for (int y = 0; y < 6; y++)
+                for (int x = 0; x < 6; x++)
+                    body(
+                            (x + y + z) % 2 == 0 ? cube : sphere,
+                            (x + y + z) % 2 == 0
+                                    ? CollisionShape3D.box(1, 1, 1)
+                                    : CollisionShape3D.sphere(.5f),
+                            MotionType3D.DYNAMIC,
+                            (x - 2.5f) * 1.05f,
+                            (y - 2.5f) * 1.05f,
+                            1 + z * 1.05f,
+                            x + y + z);
+    }
+
+    /** Creates and binds a body configured with settings specific to a feature lab. */
+    private RigidBody3D customBody(Model3D mesh, BodySettings3D settings, int shade) {
+        var model =
+                new ModelInstance3D()
+                        .setModel(mesh)
+                        .setMaterial(
+                                new Material3D()
+                                        .setTint(color(shade))
+                                        .setRoughness(.36f)
+                                        .setMetallic(.3f));
+        var body = physics.createBody(settings).bind(model);
+        scene.add(model);
+        if (settings.getMotionType() == MotionType3D.DYNAMIC) dynamic.add(body);
+        return body;
     }
 
     /**
@@ -530,7 +828,7 @@ public final class PhysicsStudio implements Application {
     /** Reframes the orbit camera around the selected gallery exhibit. */
     private void focusExhibit() {
         int index = modelList.getSelectedIndex();
-        if (scenario != 3 || index < 0 || index >= 3) return;
+        if (scenario != GALLERY || index < 0 || index >= 3) return;
         var entry = gallery.entries().get(index);
         orbit.reset();
         orbit.getTarget().set((index - 1) * 5, 1, .5f + entry.height() * .5f);
@@ -550,7 +848,7 @@ public final class PhysicsStudio implements Application {
 
     /** Creates an editor panel with the local background, padding and layout conventions. */
     private NanoPanel panel() {
-        var p = new NanoPanel();
+        var p = new GradientPanel();
         p.getLayout().absolute().column().padding(16).gap(10);
         ui.add(p);
         return p;
@@ -608,26 +906,11 @@ public final class PhysicsStudio implements Application {
         controls.add(label("SIMULATION LAB", 16));
         var scenes =
                 new NanoComboBox<String>()
-                        .items(
-                                List.of(
-                                        "Pyramid + moving platform",
-                                        "Dominoes + rolling ramp",
-                                        "Stress / 288 mixed bodies",
-                                        "Design gallery",
-                                        "Particle fountain / Jolt"))
+                        .items(SCENARIO_NAMES)
                         .selectedIndex(scenario)
                         .onChange(
                                 v -> {
-                                    scenario =
-                                            v.startsWith("Pyramid")
-                                                    ? 0
-                                                    : v.startsWith("Dominoes")
-                                                            ? 1
-                                                            : v.startsWith("Stress")
-                                                                    ? 2
-                                                                    : v.startsWith("Design")
-                                                                            ? 3
-                                                                            : 4;
+                                    scenario = SCENARIO_NAMES.indexOf(v);
                                     reset();
                                 });
         scenes.getLayout().widthPercent(100).height(36).noShrink();
@@ -680,15 +963,26 @@ public final class PhysicsStudio implements Application {
                         .selectedIndex(0);
         modelList.getLayout().widthPercent(100).height(36).noShrink();
         modelList.onChange(
-                value -> focusModel.setEnabled(scenario == 3 && modelList.getSelectedIndex() < 3));
+                value ->
+                        focusModel.setEnabled(
+                                scenario == GALLERY && modelList.getSelectedIndex() < 3));
         standardSpawn.add(modelList);
         standardSpawn.add(button("Drop selected model", this::dropModel));
         focusModel = button("Focus selected exhibit", this::focusExhibit);
-        focusModel.setEnabled(scenario == 3);
+        focusModel.setEnabled(scenario == GALLERY);
         standardSpawn.add(focusModel);
         buildParticleControls();
-        spawnDeck.add(scenario == 4 ? particleControls : standardSpawn);
+        spawnDeck.add(scenario == PARTICLES ? particleControls : standardSpawn);
         controls.add(label("ENVIRONMENT", 14));
+        var lighting = button("Lighting: enabled", () -> {});
+        lighting.action(
+                n -> {
+                    lightingEnabled = !lightingEnabled;
+                    rig.setEnabled(lightingEnabled);
+                    renderer.setEnvironmentIntensity(lightingEnabled ? environmentPower : 0);
+                    lighting.text(lightingEnabled ? "Lighting: enabled" : "Lighting: disabled");
+                });
+        controls.add(lighting);
         slider("Exposure", .25f, 8, 3.5f, v -> renderer.setExposure((float) v));
         slider(
                 "Environment",
@@ -697,7 +991,7 @@ public final class PhysicsStudio implements Application {
                 environmentPower,
                 v -> {
                     environmentPower = (float) v;
-                    renderer.setEnvironmentIntensity(environmentPower);
+                    if (lightingEnabled) renderer.setEnvironmentIntensity(environmentPower);
                 });
         ui.add(rig.panel);
         lightMarker = label("Selected light", 13);
@@ -985,7 +1279,7 @@ public final class PhysicsStudio implements Application {
                             renderMs,
                             physics.getBodyCount()));
             simulation.text(
-                    scenario == 4
+                    scenario == PARTICLES
                             ? particles.count()
                                     + " / 512 particles  |  "
                                     + (particles.physical ? "Jolt" : "Visual")
@@ -993,7 +1287,12 @@ public final class PhysicsStudio implements Application {
                                     + physics.getStepCount()
                                     + "  /  "
                                     + dynamic.size()
-                                    + " dynamic bodies");
+                                    + " dynamic bodies  |  contacts "
+                                    + contactAdded
+                                    + "/"
+                                    + contactPersisted
+                                    + "/"
+                                    + contactRemoved);
             reportClock = 0;
             reportFrames = 0;
         }
@@ -1280,7 +1579,7 @@ public final class PhysicsStudio implements Application {
             if (rig.size() != smokeLightCount) throw new AssertionError("Light deletion failed");
             rig.select(smokeLight);
         }
-        if (frames == 45 && scenario != 4) {
+        if (frames == 45 && scenario != PARTICLES) {
             smokeBodyCount = physics.getBodyCount();
             clickButton("Drop selected model");
             if (physics.getBodyCount() != smokeBodyCount + 1)
@@ -1297,7 +1596,7 @@ public final class PhysicsStudio implements Application {
             if (rig.isPlacing() || glfwWindowShouldClose(Window.getAddress()))
                 throw new AssertionError("Repeated Escape did not safely cancel placement");
         }
-        if (frames == 49 && scenario != 4) {
+        if (frames == 49 && scenario != PARTICLES) {
             modelList.open();
             var keys = glfwSetKeyCallback(Window.getAddress(), null);
             glfwSetKeyCallback(Window.getAddress(), keys);
@@ -1307,29 +1606,29 @@ public final class PhysicsStudio implements Application {
             if (modelList.isOpen() || glfwWindowShouldClose(Window.getAddress()))
                 throw new AssertionError("Repeated Escape leaked from dropdown to scene");
         }
-        if (frames == 65 && scenario == 3) {
+        if (frames == 65 && scenario == GALLERY) {
             float distance = orbit.getDistance();
             clickButton("Focus selected exhibit");
             if (orbit.getDistance() >= distance || orbit.getTarget().x != -5)
                 throw new AssertionError("Exhibit focus button failed");
         }
-        if (frames == 74 && scenario == 3) {
+        if (frames == 74 && scenario == GALLERY) {
             capture("focused-vase.png");
             modelList.selectedIndex(1);
             clickButton("Focus selected exhibit");
         }
-        if (frames == 84 && scenario == 3) {
+        if (frames == 84 && scenario == GALLERY) {
             capture("focused-crate.png");
             modelList.selectedIndex(2);
             clickButton("Focus selected exhibit");
         }
-        if (frames == 94 && scenario == 3) {
+        if (frames == 94 && scenario == GALLERY) {
             capture("focused-bust.png");
             modelList.selectedIndex(0);
             resetCamera();
         }
-        if (scenario == 4) smokeParticles();
-        if (frames == 145 && scenario != 4) {
+        if (scenario == PARTICLES) smokeParticles();
+        if (frames == 145 && scenario != PARTICLES) {
             float z = smokeImportedBody.getPosition().z;
             if (!Float.isFinite(z) || z < -.1f || z > 5.5f)
                 throw new AssertionError("Imported model did not fall and collide: " + z);
@@ -1337,13 +1636,13 @@ public final class PhysicsStudio implements Application {
                     "Editor input validation passed: UI isolation, bulb picking, XY/height drag,"
                             + " placement, toggle, duplicate/delete, imported model drop.");
         }
-        if (frames == 146 && scenario == 3) {
+        if (frames == 146 && scenario == GALLERY) {
             paused = true;
             pause.text("Resume simulation");
             var previousWorld = physics;
             clickButton("Design gallery");
             clickButton("Particle fountain / Jolt");
-            if (scenario != 4
+            if (scenario != PARTICLES
                     || !previousWorld.isClosed()
                     || particles.count() != 24
                     || particleControls.getParent() != spawnDeck
@@ -1365,7 +1664,7 @@ public final class PhysicsStudio implements Application {
                     previousEmitter.getParticles().stream().map(p -> p.getModelInstance()).toList();
             clickButton("Particle fountain / Jolt");
             clickButton("Design gallery");
-            if (scenario != 3
+            if (scenario != GALLERY
                     || !previousWorld.isClosed()
                     || !previousEmitter.isClosed()
                     || particles.emitter() != null

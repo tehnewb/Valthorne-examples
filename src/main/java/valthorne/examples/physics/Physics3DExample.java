@@ -41,8 +41,8 @@ import javax.imageio.ImageIO;
  * transforms are synchronized by physics; do not independently animate a bound model. Distances use
  * world units and time is measured in seconds.
  *
- * <p>Run through {@link valthorne.examples.launcher.ExampleLauncher} for help, validated options
- * and platform checks. Study the accompanying <a
+ * <p>Run through the documented Gradle task for validated options and platform checks. Study the
+ * accompanying <a
  * href="https://github.com/tehnewb/Valthorne-examples/blob/main/docs/physics.md">example
  * walkthrough</a> for controls, code navigation and extension exercises.
  */

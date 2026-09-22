@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="256" height="90" tilewidth="16" tileheight="16" infinite="0" backgroundcolor="#10182e">
+ <properties><property name="source" value="LDtk comparison world"/></properties>
+ <tileset firstgid="1" name="Platformer" tilewidth="16" tileheight="16" tilecount="176" columns="16">
+  <image source="platformer.png" width="256" height="176"/>
+ </tileset>
+ <objectgroup id="1" name="World">
+  <object id="1" type="Platform" x="0" y="1360" width="480" height="80"/>
+  <object id="2" type="Platform" x="560" y="1264" width="288" height="48"/>
+  <object id="3" type="Platform" x="944" y="1168" width="368" height="64"/>
+  <object id="4" type="Platform" x="1392" y="1328" width="224" height="112"/>
+  <object id="5" type="Platform" x="1696" y="1216" width="400" height="48"/>
+  <object id="6" type="Platform" x="2176" y="1104" width="256" height="64"/>
+  <object id="7" type="Platform" x="2512" y="1280" width="528" height="160"/>
+  <object id="8" type="Platform" x="3136" y="1184" width="320" height="64"/>
+  <object id="9" type="Platform" x="3536" y="1344" width="560" height="96"/>
+  <object id="10" type="Platform" x="128" y="1088" width="240" height="48"/>
+  <object id="11" type="Platform" x="448" y="944" width="336" height="64"/>
+  <object id="12" type="Platform" x="864" y="832" width="176" height="48"/>
+  <object id="13" type="Platform" x="1120" y="976" width="448" height="48"/>
+  <object id="14" type="Platform" x="1648" y="816" width="288" height="80"/>
+  <object id="15" type="Platform" x="2016" y="928" width="384" height="48"/>
+  <object id="16" type="Platform" x="2496" y="736" width="224" height="64"/>
+  <object id="17" type="Platform" x="2800" y="896" width="432" height="48"/>
+  <object id="18" type="Platform" x="3312" y="752" width="240" height="96"/>
+  <object id="19" type="Platform" x="3632" y="944" width="336" height="64"/>
+  <object id="20" type="Platform" x="0" y="608" width="400" height="64"/>
+  <object id="21" type="Platform" x="496" y="496" width="256" height="48"/>
+  <object id="22" type="Platform" x="848" y="608" width="352" height="80"/>
+  <object id="23" type="Platform" x="1312" y="448" width="240" height="48"/>
+  <object id="24" type="Platform" x="1648" y="576" width="416" height="64"/>
+  <object id="25" type="Platform" x="2160" y="400" width="288" height="48"/>
+  <object id="26" type="Platform" x="2544" y="544" width="368" height="64"/>
+  <object id="27" type="Platform" x="3008" y="384" width="224" height="48"/>
+  <object id="28" type="Platform" x="3328" y="512" width="480" height="64"/>
+  <object id="29" type="Platform" x="3840" y="304" width="256" height="80"/>
+  <object id="30" type="Platform" x="0" y="128" width="720" height="128"/>
+  <object id="31" type="Platform" x="800" y="240" width="448" height="80"/>
+  <object id="32" type="Platform" x="1344" y="112" width="640" height="112"/>
+  <object id="33" type="Platform" x="2080" y="192" width="560" height="96"/>
+  <object id="34" type="Platform" x="2736" y="96" width="608" height="128"/>
+  <object id="35" type="Platform" x="3440" y="160" width="656" height="112"/>
+  <object id="36" type="Tree" x="224" y="1280" width="48" height="80"/>
+  <object id="37" type="Tree" x="1056" y="1088" width="48" height="80"/>
+  <object id="38" type="Tree" x="1904" y="1136" width="48" height="80"/>
+  <object id="39" type="Tree" x="2720" y="1200" width="48" height="80"/>
+  <object id="40" type="Tree" x="3456" y="1104" width="48" height="80"/>
+  <object id="41" type="Mushroom" x="608" y="1248" width="16" height="16"/>
+  <object id="42" type="Mushroom" x="1184" y="1152" width="16" height="16"/>
+  <object id="43" type="Mushroom" x="1760" y="1200" width="16" height="16"/>
+  <object id="44" type="Mushroom" x="2896" y="1264" width="16" height="16"/>
+  <object id="45" type="Mushroom" x="3728" y="1328" width="16" height="16"/>
+ </objectgroup>
+</map>

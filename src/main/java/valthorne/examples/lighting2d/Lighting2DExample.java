@@ -34,8 +34,8 @@ import javax.imageio.ImageIO;
  * light/occluder state before rendering; frozen geometry and lights can reuse cached work. Timings
  * are workload measurements, not universal engine performance claims.
  *
- * <p>Run through {@link valthorne.examples.launcher.ExampleLauncher} for help, validated options
- * and platform checks. Study the accompanying <a
+ * <p>Run through the documented Gradle task for validated options and platform checks. Study the
+ * accompanying <a
  * href="https://github.com/tehnewb/Valthorne-examples/blob/main/docs/lighting2d.md">example
  * walkthrough</a> for controls, code navigation and extension exercises.
  */

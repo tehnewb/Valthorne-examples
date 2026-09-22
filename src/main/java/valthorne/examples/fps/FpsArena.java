@@ -40,8 +40,8 @@ import java.util.*;
  * FpsArenaEffects owns emitters and their attachments. Restart closes effects before replacing the
  * world. Windows x64 and OpenGL 4.3 are required for the Filament sharing path.
  *
- * <p>Run through {@link valthorne.examples.launcher.ExampleLauncher} for help, validated options
- * and platform checks. Study the accompanying <a
+ * <p>Run through the documented Gradle task for validated options and platform checks. Study the
+ * accompanying <a
  * href="https://github.com/tehnewb/Valthorne-examples/blob/main/docs/fps.md">example
  * walkthrough</a> for controls, code navigation and extension exercises.
  */

@@ -26,8 +26,8 @@ import java.nio.file.*;
  * Camera/material changes invalidate progressive accumulation. Snapshot mode waits for 512
  * accumulated samples; benchmark mode measures a separate bounded workload. OpenGL 4.3 is required.
  *
- * <p>Run through {@link valthorne.examples.launcher.ExampleLauncher} for help, validated options
- * and platform checks. Study the accompanying <a
+ * <p>Run through the documented Gradle task for validated options and platform checks. Study the
+ * accompanying <a
  * href="https://github.com/tehnewb/Valthorne-examples/blob/main/docs/path-tracing.md">example
  * walkthrough</a> for controls, code navigation and extension exercises.
  */
