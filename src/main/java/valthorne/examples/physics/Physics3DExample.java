@@ -72,7 +72,7 @@ public final class Physics3DExample implements Application {
     private final double[] renderSamples = new double[300];
 
     /**
-     * Starts this application on the process main thread. Prefer the documented Gradle launcher for
+     * Starts this application on the process main thread. Use the shared ExampleLauncher for
      * validated options and platform checks.
      *
      * @param args command-line options documented by the example guide

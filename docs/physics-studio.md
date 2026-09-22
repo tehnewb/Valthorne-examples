@@ -6,7 +6,15 @@ assets and lighting are retained while scenario resets replace the physics world
 
 **Requires:** Windows x64, OpenGL 4.3, Filament and Jolt. See [platform support](platforms.md).
 
-## Run
+## Run without Gradle
+
+[Download Physics studio for Windows x64](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-physics-studio-windows-x64-2.0.1.zip).
+Extract the whole ZIP and double-click **Start.bat**. Java, assets and dependencies
+are included. To run a bounded smoke check, open PowerShell in the extracted
+folder and use `.\Start.bat --smoke`.
+See [runtime instructions](../README-RUNTIME.md) for other distribution options.
+
+## Build and run from source
 
 ```sh
 ./gradlew runPhysicsStudio

@@ -161,7 +161,9 @@ public final class PhysicsStudioModels implements AutoCloseable {
 
     /** Bake uniform size into vertices while preserving UVs, normals, groups and MTL references. */
     private static byte[] scaleVertices(byte[] data, float targetHeight) {
-        List<String> lines = new String(data, StandardCharsets.UTF_8).lines().toList();
+        List<String> lines =
+                java.util.Arrays.asList(
+                        new String(data, StandardCharsets.UTF_8).split("\\r\\n|\\r|\\n"));
         float minY = Float.POSITIVE_INFINITY, maxY = Float.NEGATIVE_INFINITY;
         for (String line : lines) {
             String[] fields = vertexFields(line);

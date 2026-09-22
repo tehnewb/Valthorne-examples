@@ -4,6 +4,13 @@ Example Java code and documentation are covered by the repository's [Apache-2.0 
 Imported assets retain their own terms. Preserve the following notices and source
 manifests when copying or distributing a demo.
 
+The Windows desktop download also bundles unmodified Eclipse Temurin 25.0.4.1+1.
+The runtime's GPL-2.0 with Classpath Exception and other notices are retained under
+`runtime/legal/`. Its upstream binary checksum and source URL are recorded in
+[java-runtime.properties](distribution/java-runtime.properties). The release page
+provides the corresponding OpenJDK source archive beside the desktop download.
+These runtime terms do not replace the example code's Apache-2.0 license.
+
 | Collection | Source / authors | License and local provenance |
 | --- | --- | --- |
 | Gallery furniture | Kenney, Furniture Kit 2.0 | [CC0 notice](src/main/resources/valthorne/physics-studio/models/kenney-LICENSE.txt) |

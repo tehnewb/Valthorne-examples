@@ -1,8 +1,10 @@
 # Build, smoke checks and measurements
 
-`./gradlew build` compiles against Maven Central, checks Java formatting, validates
-documentation, verifies packaged assets and runs native gameplay/persistence checks.
-It also generates Javadoc. It does not open a graphics window.
+`./gradlew '-PvalthorneDir=../Valthorne' build` compiles against the sibling development
+engine, checks Java formatting, validates documentation, verifies packaged assets
+and runs native gameplay/persistence checks. It also generates Javadoc. It does not
+open a graphics window. Current main requires that engine checkout until the portable
+APIs are published; release builds continue to use Maven Central without the property.
 
 | Task | Coverage |
 | --- | --- |
@@ -28,10 +30,10 @@ native input actions. Run the same interactive demo afterward when reviewing vis
 changes; a capture check alone does not certify usability or every driver.
 
 ```sh
-./gradlew run3DExample --args="--smoke"
-./gradlew runUIShowcase --args="--smoke"
-./gradlew runPhysicsStudio --args="--smoke --scenario=4"
-./gradlew runFpsArena --args="--smoke"
+./gradlew '-PvalthorneDir=../Valthorne' run3DExample --args="--smoke"
+./gradlew '-PvalthorneDir=../Valthorne' runUIShowcase --args="--smoke"
+./gradlew '-PvalthorneDir=../Valthorne' runPhysicsStudio --args="--smoke --scenario=4"
+./gradlew '-PvalthorneDir=../Valthorne' runFpsArena --args="--smoke"
 ```
 
 Output goes to `build/captures/`, `build/ui-showcase/`, `build/audio-studio/`,
@@ -40,7 +42,8 @@ the demo. Frame capture reads the actual framebuffer size and releases native pi
 storage synchronously. Graphics failures remain failures; headless success does not
 substitute for a working context.
 
-CI builds on Windows, Linux and both Mac architectures. Linux uses Xvfb/Mesa to run
+CI builds on Windows, Linux and both Mac architectures against the engine revision
+pinned in its workflow, checked out under the ignored `build/engine` directory. Linux uses Xvfb/Mesa to run
 the portable starter, scene, physics, 2D lighting, UI and audio smoke checks. Hosted
 Mac graphics are not claimed: see [platform limits](platforms.md). Filament and compute
 smoke runs require appropriate local hardware.
@@ -54,6 +57,31 @@ timings as GPU-only measurements. GPU/driver, renderer, quality, lights, particl
 resolution, revision and power state belong with every published result.
 
 ## Release download check
+
+`examplesVersion` versions this collection and its downloads independently of
+`valthorneVersion`, the Maven Central engine dependency. Examples 2.0.1 still use
+Valthorne 2.0.0.
+
+`distZip` produces the direct launch distribution with one `.bat` and `.sh` per
+demo. `examplesZip` produces source in a different file; never overwrite one with
+the other. To make the Windows download, obtain the runtime pinned in
+[java-runtime.properties](../distribution/java-runtime.properties), verify its
+SHA-256 before extracting, then run `windowsDesktopZip` with
+`-PwindowsRuntimeHome=<absolute-path-to-extracted-jre>` on the build machine.
+Preserve the complete runtime including `legal/`, and publish its matching upstream
+source archive alongside the desktop ZIP. Gradle is only used by maintainers here.
+
+`demoDownloads` uses the same `windowsRuntimeHome` to build ten individual ZIPs
+under `build/distributions/demos/`. Each has one root `Start.bat` bound to its demo
+and a short README. Shared runtime/dependency JARs stay intact. Extract and run
+`Start.bat --smoke` from each archive before upload. Publish their SHA-256 inventory
+and verify every direct README download URL against the uploaded asset digest.
+
+Extract the desktop ZIP outside the checkout, set `JAVA_HOME` to a nonexistent
+directory and remove Java from `PATH` for the verification process, then run every
+demo's `.bat --smoke`. All ten must use the bundled runtime without Gradle or a
+dependency download. Restore the caller's environment afterward. Check an ordinary
+double-click launch as well; captures and saves must remain inside the distribution.
 
 Build `examplesZip`, extract it outside this checkout, then run `build` and at least
 the starter smoke on a supported host. The extracted project must resolve Valthorne

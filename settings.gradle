@@ -1,5 +1,6 @@
 rootProject.name = 'Valthorne-examples'
 
+// Opt in when validating engine changes that have not been published to Maven Central.
 def localValthorne = providers.gradleProperty('valthorneDir').orNull
 if (localValthorne) {
     includeBuild(file(localValthorne)) {

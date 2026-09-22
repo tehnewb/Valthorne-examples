@@ -4,7 +4,15 @@ This demo combines colored lights with occluding geometry and a cached light map
 
 **Requires:** OpenGL 3.3. See [platform support](platforms.md).
 
-## Run
+## Run without Gradle
+
+[Download 2D lighting for Windows x64](https://github.com/tehnewb/Valthorne-examples/releases/download/v2.0.1/Valthorne-demo-lighting2d-windows-x64-2.0.1.zip).
+Extract the whole ZIP and double-click **Start.bat**. Java, assets and dependencies
+are included. To run a bounded smoke check, open PowerShell in the extracted
+folder and use `.\Start.bat --smoke`.
+See [runtime instructions](../README-RUNTIME.md) for other distribution options.
+
+## Build and run from source
 
 ```sh
 ./gradlew runLighting2DExample

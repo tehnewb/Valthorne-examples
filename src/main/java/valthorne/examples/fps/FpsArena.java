@@ -2,13 +2,11 @@
 
 package valthorne.examples.fps;
 
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.nanovg.NanoVG.*;
-import static org.lwjgl.opengl.GL43.*;
+import static valthorne.PlatformTools.*;
+import static valthorne.ui.Canvas2D.*;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.lwjgl.nanovg.NVGColor;
 
 import valthorne.*;
 import valthorne.camera.PerspectiveCamera;
@@ -17,7 +15,6 @@ import valthorne.event.events.*;
 import valthorne.event.listeners.KeyAdapter;
 import valthorne.event.listeners.MouseAdapter;
 import valthorne.examples.assets.PhysicsStudioModels;
-import valthorne.examples.shared.FrameCapture;
 import valthorne.graphics.Color;
 import valthorne.graphics.model.*;
 import valthorne.ui.UIContainer;
@@ -27,7 +24,6 @@ import valthorne.ui.nodes.nano.*;
 import valthorne.ui.theme.ProfessionalTheme;
 import valthorne.viewport.ScreenViewport;
 
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -116,15 +112,15 @@ public final class FpsArena implements Application {
                 public void keyPressed(KeyPressEvent e) {
                     int key = e.getKey();
                     if (key < 0 || key != freshKey) return;
-                    if (key == GLFW_KEY_ESCAPE) {
+                    if (key == Keyboard.ESCAPE) {
                         setPlaying(!playing && !game.isDead());
                         e.consume();
                     } else if (playing) {
-                        if (key == GLFW_KEY_SPACE) jumpQueued = true;
-                        if (key == GLFW_KEY_R) game.reload();
-                        if (key == GLFW_KEY_G && game.throwGrenade(eye, forward))
+                        if (key == Keyboard.SPACE) jumpQueued = true;
+                        if (key == Keyboard.R) game.reload();
+                        if (key == Keyboard.G && game.throwGrenade(eye, forward))
                             tell("GRENADE OUT");
-                        if (key == GLFW_KEY_F && effects.flare(eye, forward, game.getPlayerBody()))
+                        if (key == Keyboard.F && effects.flare(eye, forward, game.getPlayerBody()))
                             tell("LIGHT FLARE DEPLOYED");
                     }
                 }
@@ -150,7 +146,7 @@ public final class FpsArena implements Application {
             };
 
     /**
-     * Starts this application on the process main thread. Prefer the documented Gradle launcher for
+     * Starts this application on the process main thread. Use the shared ExampleLauncher for
      * validated options and platform checks.
      *
      * @param args command-line options documented by the example guide
@@ -172,7 +168,7 @@ public final class FpsArena implements Application {
         JGL.init(
                 app,
                 JGLConfiguration.defaults()
-                        .contextVersion(4, 3)
+                        .contextVersion(4, 1)
                         .size(1600, 960)
                         .depthBits(24)
                         .visible(!app.smoke && !app.benchmark)
@@ -208,8 +204,8 @@ public final class FpsArena implements Application {
         Keyboard.addKeyListener(keys);
         Mouse.addMouseListener(mouse);
         JGL.subscribe(EventTypes.WINDOW_FOCUS, focus);
-        glfwSetWindowSizeLimits(Window.getAddress(), 1280, 800, GLFW_DONT_CARE, GLFW_DONT_CARE);
-        glfwSwapInterval(0);
+        Window.setSizeLimits(640, 480, -1, -1);
+        Window.setSwapInterval(SwapInterval.OFF);
         if (benchmark) setPlaying(true);
     }
 
@@ -486,7 +482,7 @@ public final class FpsArena implements Application {
                 keyPower,
                 v -> {
                     keyPower = (float) v;
-                    roomLights.getFirst().setIntensity(keyPower);
+                    roomLights.get(0).setIntensity(keyPower);
                 });
         slider(
                 "Mouse sensitivity",
@@ -497,7 +493,7 @@ public final class FpsArena implements Application {
         menu.add(label("WASD move   Shift sprint   Space jump", 12));
         menu.add(label("Left fire   Right aim   R reload", 12));
         menu.add(label("G grenade   F light flare   Esc console", 12));
-        menu.add(button("Exit arena", () -> glfwSetWindowShouldClose(Window.getAddress(), true)));
+        menu.add(button("Exit arena", Window::requestClose));
         ui.add(menu);
     }
 
@@ -523,15 +519,8 @@ public final class FpsArena implements Application {
                             : "Clear drone waves. Test every impact.");
         }
         if (!smoke && !benchmark) {
-            glfwSetInputMode(
-                    Window.getAddress(),
-                    GLFW_CURSOR,
-                    playing ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-            if (glfwRawMouseMotionSupported())
-                glfwSetInputMode(
-                        Window.getAddress(),
-                        GLFW_RAW_MOUSE_MOTION,
-                        playing ? GLFW_TRUE : GLFW_FALSE);
+            Mouse.setCursorMode(playing ? Mouse.CURSOR_DISABLED : Mouse.CURSOR_NORMAL);
+            Mouse.setRawMouseMotion(playing);
         }
     }
 
@@ -543,7 +532,7 @@ public final class FpsArena implements Application {
             // preserve relative movement when an unbounded captured cursor wraps.
             yaw += (short) ((int) x - (int) lastMouseX) * sensitivity;
             pitch =
-                    Math.clamp(
+                    valthorne.math.MathUtils.clamp(
                             pitch + (short) ((int) y - (int) lastMouseY) * sensitivity,
                             -1.4f,
                             1.4f);
@@ -565,7 +554,7 @@ public final class FpsArena implements Application {
         camera.getPosition().set(eye);
         camera.getDirection().set(forward);
         camera.getUp().set(0, 0, 1);
-        boolean aim = playing && Mouse.isButtonDown(GLFW_MOUSE_BUTTON_RIGHT);
+        boolean aim = playing && Mouse.isButtonDown(Mouse.RIGHT);
         camera.setFieldOfViewDegrees(aim ? 48 : fieldOfView);
         float reloadPose =
                 game.isReloading() ? (float) Math.sin(game.getReloadProgress() * Math.PI) : 0;
@@ -614,16 +603,16 @@ public final class FpsArena implements Application {
         long start = System.nanoTime();
         if (playing) {
             updateCamera();
-            if (Mouse.isButtonDown(GLFW_MOUSE_BUTTON_LEFT) && game.fire(eye, forward)) {
+            if (Mouse.isButtonDown(Mouse.LEFT) && game.fire(eye, forward)) {
                 recoil = .07f;
             }
             float move =
-                    (Keyboard.isKeyDown(GLFW_KEY_W) ? 1 : 0)
-                            - (Keyboard.isKeyDown(GLFW_KEY_S) ? 1 : 0);
+                    (Keyboard.isKeyDown(Keyboard.W) ? 1 : 0)
+                            - (Keyboard.isKeyDown(Keyboard.S) ? 1 : 0);
             float strafe =
-                    (Keyboard.isKeyDown(GLFW_KEY_D) ? 1 : 0)
-                            - (Keyboard.isKeyDown(GLFW_KEY_A) ? 1 : 0);
-            game.update(dt, move, strafe, Keyboard.isKeyDown(GLFW_KEY_LEFT_SHIFT), jumpQueued, yaw);
+                    (Keyboard.isKeyDown(Keyboard.D) ? 1 : 0)
+                            - (Keyboard.isKeyDown(Keyboard.A) ? 1 : 0);
+            game.update(dt, move, strafe, Keyboard.isKeyDown(Keyboard.LEFT_SHIFT), jumpQueued, yaw);
             jumpQueued = false;
             effects.update(dt);
             if (game.getHealth() < lastHealth) damageFlash = .3f;
@@ -691,11 +680,11 @@ public final class FpsArena implements Application {
     public void render() {
         long start = System.nanoTime();
         Window.clear(BACKGROUND);
-        glViewport(0, 0, width, height);
+        PlatformTools.viewport(0, 0, width, height);
         renderer.render(scene, camera);
         refreshDetails(renderer.getPointLightCount());
         ui.draw();
-        if (smoke || benchmark) glFinish();
+        if (smoke || benchmark) PlatformTools.finish();
         renderMs = (System.nanoTime() - start) * 1e-6f;
         frames++;
         if (smoke) smokeFrame();
@@ -707,21 +696,13 @@ public final class FpsArena implements Application {
      * without owning simulation resources.
      */
     private final class Hud extends NanoContainer {
-        private final NVGColor ink = NVGColor.create();
 
         /**
          * Sets the NanoVG fill color from packed RGB and normalized opacity without creating a
          * persistent color object.
          */
         private void fill(long vg, int rgb, float alpha) {
-            nvgRGBA(
-                    (byte) (rgb >>> 16),
-                    (byte) (rgb >>> 8),
-                    (byte) rgb,
-                    (byte) Math.round(alpha * 255),
-                    ink);
-            nvgFillColor(vg, ink);
-            nvgStrokeColor(vg, ink);
+            valthorne.ui.Canvas2D.color(vg, rgb, alpha);
         }
 
         /**
@@ -730,18 +711,18 @@ public final class FpsArena implements Application {
          */
         private void box(long vg, float x, float y, float w, float h, int rgb, float alpha) {
             fill(vg, rgb, alpha);
-            nvgBeginPath(vg);
-            nvgRoundedRect(vg, x, y, w, h, 8);
-            nvgFill(vg);
+            beginPath(vg);
+            roundedRect(vg, x, y, w, h, 8);
+            valthorne.ui.Canvas2D.fill(vg);
         }
 
         /** Draws aligned HUD text using the current NanoVG context and explicit pixel size. */
         private void text(long vg, float x, float y, String text, float size, int rgb, int align) {
             fill(vg, rgb, 1);
-            nvgFontFace(vg, "default");
-            nvgFontSize(vg, size);
-            nvgTextAlign(vg, align | NVG_ALIGN_TOP);
-            nvgText(vg, x, y, text);
+            fontFace(vg, "default");
+            fontSize(vg, size);
+            textAlign(vg, align | ALIGN_TOP);
+            valthorne.ui.Canvas2D.text(vg, x, y, text);
         }
 
         /**
@@ -751,16 +732,16 @@ public final class FpsArena implements Application {
         @Override
         public void draw(long vg) {
             box(vg, 24, 22, 320, 70, 0x07131F, .88f);
-            text(vg, 42, 34, "VALTHORNE  /  LIVE FIRE", 21, 0xEDF5FC, NVG_ALIGN_LEFT);
-            text(vg, 42, 65, "PHYSICS + LIGHT COMBAT ARENA", 11, 0x69D9E8, NVG_ALIGN_LEFT);
+            text(vg, 42, 34, "VALTHORNE  /  LIVE FIRE", 21, 0xEDF5FC, ALIGN_LEFT);
+            text(vg, 42, 65, "PHYSICS + LIGHT COMBAT ARENA", 11, 0x69D9E8, ALIGN_LEFT);
             box(vg, width / 2f - 130, 22, 260, 70, 0x07131F, .88f);
-            text(vg, width / 2f, 31, waveText, 24, 0xFFFFFF, NVG_ALIGN_CENTER);
-            text(vg, width / 2f, 63, targetText, 12, 0xFFD181, NVG_ALIGN_CENTER);
+            text(vg, width / 2f, 31, waveText, 24, 0xFFFFFF, ALIGN_CENTER);
+            text(vg, width / 2f, 63, targetText, 12, 0xFFD181, ALIGN_CENTER);
             box(vg, width - 444, 22, 420, 70, 0x07131F, .88f);
-            text(vg, width - 426, 34, performance, 13, 0xC2D4E6, NVG_ALIGN_LEFT);
-            text(vg, width - 426, 60, details, 12, 0x69D9E8, NVG_ALIGN_LEFT);
+            text(vg, width - 426, 34, performance, 13, 0xC2D4E6, ALIGN_LEFT);
+            text(vg, width - 426, 60, details, 12, 0x69D9E8, ALIGN_LEFT);
             box(vg, 24, height - 128, 228, 94, 0x07131F, .9f);
-            text(vg, 42, height - 114, "VITALS", 11, 0x91A9BF, NVG_ALIGN_LEFT);
+            text(vg, 42, height - 114, "VITALS", 11, 0x91A9BF, ALIGN_LEFT);
             text(
                     vg,
                     42,
@@ -768,38 +749,38 @@ public final class FpsArena implements Application {
                     healthText,
                     32,
                     game.getHealth() < 30 ? 0xFF6666 : 0xFFFFFF,
-                    NVG_ALIGN_LEFT);
-            text(vg, 120, height - 87, "ARMOR INTEGRITY", 10, 0x91A9BF, NVG_ALIGN_LEFT);
+                    ALIGN_LEFT);
+            text(vg, 120, height - 87, "ARMOR INTEGRITY", 10, 0x91A9BF, ALIGN_LEFT);
             box(vg, 42, height - 48, 192, 4, 0x263E51, 1);
             box(vg, 42, height - 48, 192 * Math.max(0, game.getHealth()) / 100f, 4, 0x55D6BF, 1);
             box(vg, width - 300, height - 138, 276, 104, 0x07131F, .9f);
-            text(vg, width - 280, height - 125, reloadText, 12, 0x69D9E8, NVG_ALIGN_LEFT);
-            text(vg, width - 280, height - 103, ammoText, 42, 0xFFFFFF, NVG_ALIGN_LEFT);
-            text(vg, width - 205, height - 86, reserveText, 21, 0x91A9BF, NVG_ALIGN_LEFT);
-            text(vg, width - 280, height - 51, supplies, 11, 0xFFD181, NVG_ALIGN_LEFT);
+            text(vg, width - 280, height - 125, reloadText, 12, 0x69D9E8, ALIGN_LEFT);
+            text(vg, width - 280, height - 103, ammoText, 42, 0xFFFFFF, ALIGN_LEFT);
+            text(vg, width - 205, height - 86, reserveText, 21, 0x91A9BF, ALIGN_LEFT);
+            text(vg, width - 280, height - 51, supplies, 11, 0xFFD181, ALIGN_LEFT);
             if (playing) {
                 float cx = width * .5f, cy = height * .5f, gap = 6 + recoil * 110;
                 fill(vg, 0xDBFAFF, .9f);
-                nvgStrokeWidth(vg, 1.5f);
-                nvgBeginPath(vg);
-                nvgMoveTo(vg, cx - gap - 7, cy);
-                nvgLineTo(vg, cx - gap, cy);
-                nvgMoveTo(vg, cx + gap, cy);
-                nvgLineTo(vg, cx + gap + 7, cy);
-                nvgMoveTo(vg, cx, cy - gap - 7);
-                nvgLineTo(vg, cx, cy - gap);
-                nvgMoveTo(vg, cx, cy + gap);
-                nvgLineTo(vg, cx, cy + gap + 7);
-                nvgStroke(vg);
+                strokeWidth(vg, 1.5f);
+                beginPath(vg);
+                moveTo(vg, cx - gap - 7, cy);
+                lineTo(vg, cx - gap, cy);
+                moveTo(vg, cx + gap, cy);
+                lineTo(vg, cx + gap + 7, cy);
+                moveTo(vg, cx, cy - gap - 7);
+                lineTo(vg, cx, cy - gap);
+                moveTo(vg, cx, cy + gap);
+                lineTo(vg, cx, cy + gap + 7);
+                stroke(vg);
                 if (hitFlash > 0) {
                     fill(vg, 0xFFD181, 1);
-                    nvgBeginPath(vg);
+                    beginPath(vg);
                     for (int sx = -1; sx <= 1; sx += 2)
                         for (int sy = -1; sy <= 1; sy += 2) {
-                            nvgMoveTo(vg, cx + sx * 13, cy + sy * 13);
-                            nvgLineTo(vg, cx + sx * 20, cy + sy * 20);
+                            moveTo(vg, cx + sx * 13, cy + sy * 13);
+                            lineTo(vg, cx + sx * 20, cy + sy * 20);
                         }
-                    nvgStroke(vg);
+                    stroke(vg);
                 }
                 text(
                         vg,
@@ -809,10 +790,10 @@ public final class FpsArena implements Application {
                                 + " flare   ESC console",
                         12,
                         0xC2D4E6,
-                        NVG_ALIGN_CENTER);
+                        ALIGN_CENTER);
             }
             if (toastTime > 0)
-                text(vg, width / 2f, height * .64f, toast, 17, 0xFFD181, NVG_ALIGN_CENTER);
+                text(vg, width / 2f, height * .64f, toast, 17, 0xFFD181, ALIGN_CENTER);
             if (game.isReloading())
                 box(
                         vg,
@@ -824,10 +805,10 @@ public final class FpsArena implements Application {
                         1);
             if (damageFlash > 0) {
                 fill(vg, 0xFF3A3A, damageFlash * 1.5f);
-                nvgStrokeWidth(vg, 18);
-                nvgBeginPath(vg);
-                nvgRect(vg, 4, 4, width - 8, height - 8);
-                nvgStroke(vg);
+                strokeWidth(vg, 18);
+                beginPath(vg);
+                rect(vg, 4, 4, width - 8, height - 8);
+                stroke(vg);
             }
             if (!playing) {
                 box(vg, 0, 0, width, height, 0x020810, .32f);
@@ -838,7 +819,7 @@ public final class FpsArena implements Application {
                         started ? "SIMULATION PAUSED" : "ENTER THE ARENA",
                         36,
                         0xFFFFFF,
-                        NVG_ALIGN_CENTER);
+                        ALIGN_CENTER);
                 text(
                         vg,
                         width * .68f,
@@ -846,7 +827,7 @@ public final class FpsArena implements Application {
                         "Reactive props. Bouncing debris. Lights in motion.",
                         17,
                         0xC2D4E6,
-                        NVG_ALIGN_CENTER);
+                        ALIGN_CENTER);
             }
         }
     }
@@ -856,7 +837,7 @@ public final class FpsArena implements Application {
      * overloads choose the output name.
      */
     private void capture(String name) {
-        FrameCapture.save(Path.of("build/fps-arena", name));
+        PlatformTools.capture("build/fps-arena/" + name, width, height);
     }
 
     private Vector3f smokeStart;
@@ -868,32 +849,21 @@ public final class FpsArena implements Application {
      * same routing as interactive input.
      */
     private void key(int code, int action) {
-        long window = Window.getAddress();
-        var callback = glfwSetKeyCallback(window, null);
-        glfwSetKeyCallback(window, callback);
-        callback.invoke(window, code, 0, action, 0);
+        PlatformTools.injectKey(code, action);
     }
 
     /** Injects a key press followed by its release to exercise an edge-triggered shortcut. */
     private void tap(int code) {
-        key(code, GLFW_PRESS);
-        key(code, GLFW_RELEASE);
+        key(code, PRESS);
+        key(code, RELEASE);
     }
 
     /**
-     * Injects native pointer callbacks for deterministic smoke interaction, using window
-     * coordinates and GLFW button/action constants.
+     * Injects pointer events for deterministic smoke interaction, using window coordinates and
+     * engine mouse-button/action constants.
      */
     private void pointer(float x, float y, int button, int action) {
-        long window = Window.getAddress();
-        var cursor = glfwSetCursorPosCallback(window, null);
-        glfwSetCursorPosCallback(window, cursor);
-        cursor.invoke(window, x, height - y);
-        if (button >= 0) {
-            var callback = glfwSetMouseButtonCallback(window, null);
-            glfwSetMouseButtonCallback(window, callback);
-            callback.invoke(window, button, action, 0);
-        }
+        PlatformTools.injectPointer(x, y, button, action);
     }
 
     /** Searches the UI subtree by visible button text; returns null when the target is absent. */
@@ -913,8 +883,8 @@ public final class FpsArena implements Application {
         require(button != null, "Missing button: " + text);
         float x = button.getAbsoluteX() + button.getWidth() / 2;
         float y = height - button.getAbsoluteY() - button.getHeight() / 2;
-        pointer(x, y, GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS);
-        pointer(x, y, GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE);
+        pointer(x, y, Mouse.LEFT, PRESS);
+        pointer(x, y, Mouse.LEFT, RELEASE);
     }
 
     /**
@@ -939,13 +909,13 @@ public final class FpsArena implements Application {
             game.setWavesEnabled(false);
             game.clearDrones();
             smokeStart = new Vector3f(eye);
-            key(GLFW_KEY_W, GLFW_PRESS);
+            key(Keyboard.W, PRESS);
         }
         if (frames == 32) {
-            key(GLFW_KEY_W, GLFW_RELEASE);
+            key(Keyboard.W, RELEASE);
             require(eye.y - smokeStart.y > 1.5f, "WASD did not move the player");
             smokeStart.set(eye);
-            tap(GLFW_KEY_SPACE);
+            tap(Keyboard.SPACE);
             require(jumpQueued, "Space was consumed before gameplay");
         }
         if (frames == 43)
@@ -970,12 +940,12 @@ public final class FpsArena implements Application {
                             + lookReady
                             + ", playing="
                             + playing);
-            pointer(870, 500, GLFW_MOUSE_BUTTON_RIGHT, GLFW_PRESS);
+            pointer(870, 500, Mouse.RIGHT, PRESS);
         }
         if (frames == 68) {
             require(camera.getFieldOfViewDegrees() == 48, "Aim zoom failed");
             capture("aim.png");
-            pointer(870, 500, GLFW_MOUSE_BUTTON_RIGHT, GLFW_RELEASE);
+            pointer(870, 500, Mouse.RIGHT, RELEASE);
             yaw = pitch = 0;
         }
         if (frames == 69) {
@@ -989,33 +959,33 @@ public final class FpsArena implements Application {
         if (frames == 71) game.spawnDrone(eye.x, eye.y + 4, eye.z);
         if (frames == 72) {
             smokeAmmo = game.getAmmo();
-            pointer(width / 2f, height / 2f, GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS);
+            pointer(width / 2f, height / 2f, Mouse.LEFT, PRESS);
         }
         if (frames == 86) capture("particles.png");
         if (frames == 98) {
-            pointer(width / 2f, height / 2f, GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE);
+            pointer(width / 2f, height / 2f, Mouse.LEFT, RELEASE);
             require(
                     game.getAmmo() < smokeAmmo && game.getKills() >= 1,
                     "Shooting did not damage a drone");
-            tap(GLFW_KEY_R);
+            tap(Keyboard.R);
             require(game.isReloading(), "Reload key failed");
         }
         if (frames == 110) {
-            tap(GLFW_KEY_F);
+            tap(Keyboard.F);
             require(effects.flareCount() > 0, "Flare key failed");
         }
         if (frames == 112) {
             smokeGrenades = game.getGrenadesRemaining();
-            tap(GLFW_KEY_G);
+            tap(Keyboard.G);
             require(game.getGrenadesRemaining() == smokeGrenades - 1, "Grenade key failed");
         }
         if (frames == 140) {
-            key(GLFW_KEY_ESCAPE, GLFW_PRESS);
+            key(Keyboard.ESCAPE, PRESS);
             require(!playing, "Escape did not pause");
             smokeStep = game.getPhysics().getStepCount();
-            key(GLFW_KEY_ESCAPE, GLFW_REPEAT);
+            key(Keyboard.ESCAPE, REPEAT);
             require(!playing, "Repeated Escape resumed the game");
-            key(GLFW_KEY_ESCAPE, GLFW_RELEASE);
+            key(Keyboard.ESCAPE, RELEASE);
         }
         if (frames == 142) {
             require(
@@ -1049,7 +1019,7 @@ public final class FpsArena implements Application {
             click("Flare shadows: 4");
             require(particleShadowBudget == 4, "Flare shadow quality control failed");
         }
-        if (frames == 148) tap(GLFW_KEY_F);
+        if (frames == 148) tap(Keyboard.F);
         if (frames == 210) {
             require(!game.isReloading() && game.getAmmo() == smokeAmmo, "Reload did not complete");
             require(
@@ -1070,7 +1040,7 @@ public final class FpsArena implements Application {
                             && maximumLights > 4,
                     "Combat validation incomplete");
             var previousWorld = game.getPhysics();
-            tap(GLFW_KEY_ESCAPE);
+            tap(Keyboard.ESCAPE);
             click("Restart run");
             require(
                     previousWorld.isClosed() && playing && game.getHealth() == 100,
@@ -1082,7 +1052,7 @@ public final class FpsArena implements Application {
                     "Restart retained stale combat HUD state");
         }
         if (frames == 290) {
-            require(glGetError() == GL_NO_ERROR, "FPS renderer GL error");
+            require(PlatformTools.graphicsError() == 0, "FPS renderer GL error");
             capture("ready.png");
             System.out.println(
                     "FPS_INPUT_VALIDATED movement, jump, mouse look, aim, shooting, reload,"
@@ -1091,7 +1061,7 @@ public final class FpsArena implements Application {
                             + maximumParticles
                             + ", peak lights="
                             + maximumLights);
-            glfwSetWindowShouldClose(Window.getAddress(), true);
+            Window.requestClose();
         }
     }
 
@@ -1121,7 +1091,7 @@ public final class FpsArena implements Application {
         }
         if (frames == 450) {
             require(
-                    !game.isDead() && eye.isFinite() && glGetError() == GL_NO_ERROR,
+                    !game.isDead() && eye.isFinite() && PlatformTools.graphicsError() == 0,
                     "Invalid FPS benchmark state");
             report("render", renderSamples);
             report("simulation", simulationSamples);
@@ -1141,7 +1111,7 @@ public final class FpsArena implements Application {
                             + game.getBodyCount()
                             + ", cachedMeshes="
                             + renderer.getCachedMeshCount());
-            glfwSetWindowShouldClose(Window.getAddress(), true);
+            Window.requestClose();
         }
     }
 
@@ -1158,7 +1128,7 @@ public final class FpsArena implements Application {
                 Arrays.stream(samples).average().orElseThrow(),
                 samples[samples.length / 2],
                 samples[(int) (samples.length * .95)],
-                glGetString(GL_RENDERER));
+                PlatformTools.rendererName());
     }
 
     /**
@@ -1167,7 +1137,8 @@ public final class FpsArena implements Application {
      */
     @Override
     public void dispose() {
-        glfwSetInputMode(Window.getAddress(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        Mouse.setCursorMode(Mouse.CURSOR_NORMAL);
+        Mouse.setRawMouseMotion(false);
         Keyboard.removeKeyListener(keys);
         Keyboard.removeKeyListener(keyEdges);
         Mouse.removeMouseListener(mouse);

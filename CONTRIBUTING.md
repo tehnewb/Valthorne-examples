@@ -1,7 +1,9 @@
 # Contributing
 
-Use JDK 25 and the checked-in wrapper. This project is a consumer of Valthorne 2.0.0;
-changes must build without a local engine checkout or `mavenLocal()`.
+Use JDK 25 and the checked-in wrapper. Current main uses development engine APIs;
+select a sibling engine checkout with `'-PvalthorneDir=../Valthorne'`. CI pins the
+matching engine revision; see [web development](docs/web-development.md). Releases
+must build against a published engine without a local checkout or `mavenLocal()`.
 
 ## Code and documentation
 
@@ -22,9 +24,9 @@ changes must build without a local engine checkout or `mavenLocal()`.
 
 ```sh
 ./gradlew formatJava
-./gradlew build
-./gradlew run --args="<demo-id> --help"
-./gradlew run --args="<demo-id> --smoke"
+./gradlew '-PvalthorneDir=../Valthorne' build
+./gradlew '-PvalthorneDir=../Valthorne' run --args="<demo-id> --help"
+./gradlew '-PvalthorneDir=../Valthorne' run --args="<demo-id> --smoke"
 ```
 
 Choose a supported graphics host for the last command. Record the OS, GPU and driver

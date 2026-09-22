@@ -49,7 +49,7 @@ public final class PathTracingExample implements Application {
     private int frames;
 
     /**
-     * Starts this application on the process main thread. Prefer the documented Gradle launcher for
+     * Starts this application on the process main thread. Use the shared ExampleLauncher for
      * validated options and platform checks.
      *
      * @param args command-line options documented by the example guide
