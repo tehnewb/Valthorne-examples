@@ -16,6 +16,20 @@ application {
     applicationDefaultJvmArgs = ['--enable-native-access=ALL-UNNAMED']
 }
 
+tasks.register('runWidgetShowcase', JavaExec) {
+    description = 'Opens the new file, menu, color and numeric widget showcase (requires the local engine).'
+    group = 'application'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'valthorne.examples.ui.WidgetShowcase'
+}
+
+tasks.register('runNanoWidgetShowcase', JavaExec) {
+    description = 'Opens the NanoVG file, menu, editing and window showcase (requires the local engine).'
+    group = 'application'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'valthorne.examples.ui.NanoWidgetShowcase'
+}
+
 // Keep the executable distribution distinct from examplesZip's source project.
 tasks.named('distZip') { archiveFileName = "Valthorne-examples-runtime-${version}.zip" }
 distributions.main.contents {

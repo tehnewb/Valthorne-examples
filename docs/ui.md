@@ -26,6 +26,49 @@ native access and macOS first-thread flags where applicable.
 
 ## Controls
 
+### Wheel and file chooser showcase
+
+The focused [WidgetShowcase](../src/main/java/valthorne/examples/ui/WidgetShowcase.java)
+demonstrates the wheel, Open/Save chooser, menus, dropdowns, and numeric controls.
+Use the sibling engine checkout containing these widgets:
+
+```powershell
+.\gradlew.bat '-PvalthorneDir=../Valthorne' runWidgetShowcase
+```
+
+Drag the wheel to change hue/saturation and use Value and Alpha independently.
+The View menu switches between wheel and RGBA sliders. The chooser's operation
+dropdown selects Open files, Save file, or Choose folder. Double-click folders,
+type a location or filename, change the file filter, and use Ctrl/Shift selection
+in Open mode. Save requests Replace confirmation for existing files. Approval only
+reports the selected path in this demo; it never writes a file. The chooser now has
+a breadcrumb/editable path at the top, an expandable folder tree at the left, and
+sortable Name/Date modified rows at the right. Search filters the current directory.
+Ctrl+L edits the path, Alt+Left/Right traverses history, and F5 refreshes. **New folder**
+creates an actual directory after a name is entered. The modal chooser
+button demonstrates Cancel/Escape and focus restoration. Toggle light/dark to compare
+both palettes. This showcase starts in the light palette to match a conventional desktop file dialog.
+
+The floating **Window widget** demo opens on launch. Drag its title, resize an edge
+or corner, and independently toggle **Dragging** and **Resizing** inside the window.
+Edit the title field and press Enter to rename it. The top-right **X** or **Close window** preserves its
+state; **Window demo** or View → Show window demo brings it back. Keyboard focus on
+the title or a resize border supports arrow keys, with Shift for larger steps.
+
+### NanoVG widget showcase
+
+[NanoWidgetShowcase](../src/main/java/valthorne/examples/ui/NanoWidgetShowcase.java)
+provides the same file chooser, menus, color editor, and floating window using
+NanoVG controls throughout. It supports the same interactions and light/dark switch.
+
+```sh
+./gradlew runNanoWidgetShowcase -PvalthorneDir=../Valthorne
+```
+
+In PowerShell, use `./gradlew.bat runNanoWidgetShowcase '-PvalthorneDir=../Valthorne'`.
+
+### Main gallery controls
+
 - Use the scrolling left navigation to choose an element family such as Button/NanoButton, Grid/NanoGrid or DataTable/NanoDataTable.
 - **Inspect layout**: toggle live bounds visualization for the retained UI tree.
 - **Tab / Shift+Tab**: move keyboard focus. **Enter / Space**: activate the focused control.
