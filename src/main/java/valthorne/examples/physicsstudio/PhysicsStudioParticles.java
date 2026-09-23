@@ -6,7 +6,7 @@ import valthorne.graphics.Color;
 import valthorne.graphics.model.Material3D;
 import valthorne.graphics.model.Model3D;
 import valthorne.graphics.model.ModelBuilder3D;
-import valthorne.graphics.model.Scene3D;
+import valthorne.graphics.scene.Scene3D;
 import valthorne.graphics.particle.ParticleEmitter3D;
 import valthorne.math.physics.BodySettings3D;
 import valthorne.math.physics.CollisionShape3D;

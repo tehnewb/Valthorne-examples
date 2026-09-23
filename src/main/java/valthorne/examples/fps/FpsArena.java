@@ -2,6 +2,11 @@
 
 package valthorne.examples.fps;
 
+import valthorne.graphics.render.FilamentRenderer3D;
+import valthorne.graphics.scene.ModelInstance3D;
+import valthorne.graphics.lighting3d.PointLight3D;
+import valthorne.graphics.scene.Scene3D;
+
 import static valthorne.PlatformTools.*;
 import static valthorne.ui.Canvas2D.*;
 

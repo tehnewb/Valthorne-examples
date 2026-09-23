@@ -2,6 +2,13 @@
 
 package valthorne.examples.physics;
 
+import valthorne.graphics.render.MeshRenderState3D;
+import valthorne.graphics.render.ModelBatch3D;
+import valthorne.graphics.scene.ModelInstance3D;
+import valthorne.graphics.lighting3d.PointLight3D;
+import valthorne.graphics.scene.Scene3D;
+import valthorne.graphics.render.ShadowMap3D;
+
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 

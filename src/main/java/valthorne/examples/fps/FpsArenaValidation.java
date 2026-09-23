@@ -7,8 +7,8 @@ import org.joml.Vector3f;
 import org.joml.primitives.Rayf;
 
 import valthorne.graphics.model.ModelBuilder3D;
-import valthorne.graphics.model.ModelInstance3D;
-import valthorne.graphics.model.Scene3D;
+import valthorne.graphics.scene.ModelInstance3D;
+import valthorne.graphics.scene.Scene3D;
 import valthorne.math.physics.BodySettings3D;
 import valthorne.math.physics.CollisionShape3D;
 import valthorne.math.physics.MotionType3D;
@@ -452,7 +452,7 @@ public final class FpsArenaValidation {
                         "particle materials fade independently and are retained by their pools");
                 check(
                         material.getRenderPass()
-                                        == valthorne.graphics.model.RenderPass3D.TRANSLUCENT
+                                        == valthorne.graphics.render.RenderPass3D.TRANSLUCENT
                                 && material.getTint().a() > 0
                                 && material.getTint().a() < 1,
                         "moving particles use actual partial alpha");

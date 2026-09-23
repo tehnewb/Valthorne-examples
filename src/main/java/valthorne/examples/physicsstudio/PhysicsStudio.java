@@ -2,6 +2,10 @@
 
 package valthorne.examples.physicsstudio;
 
+import valthorne.graphics.render.FilamentRenderer3D;
+import valthorne.graphics.scene.ModelInstance3D;
+import valthorne.graphics.scene.Scene3D;
+
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.nanovg.NanoVG.*;
 import static org.lwjgl.opengl.GL43.*;

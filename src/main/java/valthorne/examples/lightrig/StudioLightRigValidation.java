@@ -4,8 +4,8 @@ package valthorne.examples.lightrig;
 
 import org.joml.Vector3f;
 
-import valthorne.graphics.model.ModelInstance3D;
-import valthorne.graphics.model.Scene3D;
+import valthorne.graphics.scene.ModelInstance3D;
+import valthorne.graphics.scene.Scene3D;
 
 import java.io.Reader;
 import java.io.Writer;

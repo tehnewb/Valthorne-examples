@@ -2,6 +2,10 @@
 
 package valthorne.examples.fps;
 
+import valthorne.graphics.render.RenderPass3D;
+import valthorne.graphics.render.RenderStateSnapshot3D;
+import valthorne.graphics.scene.Scene3D;
+
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.primitives.Rayf;

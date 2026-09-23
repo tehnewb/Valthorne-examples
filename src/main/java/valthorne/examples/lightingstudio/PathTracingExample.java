@@ -2,6 +2,10 @@
 
 package valthorne.examples.lightingstudio;
 
+import valthorne.graphics.scene.ModelInstance3D;
+import valthorne.graphics.render.PathTracer3D;
+import valthorne.graphics.scene.Scene3D;
+
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL43.*;
 

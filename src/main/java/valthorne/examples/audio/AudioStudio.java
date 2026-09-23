@@ -2,6 +2,11 @@
 
 package valthorne.examples.audio;
 
+import valthorne.graphics.render.MeshRenderState3D;
+import valthorne.graphics.render.ModelBatch3D;
+import valthorne.graphics.scene.ModelInstance3D;
+import valthorne.graphics.render.RenderPass3D;
+
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
@@ -12,9 +17,9 @@ import org.lwjgl.BufferUtils;
 
 import valthorne.*;
 import valthorne.audio.AudioFormat;
-import valthorne.audio.sound.SoundArea;
-import valthorne.audio.sound.SoundData;
-import valthorne.audio.sound.SoundPlayer;
+import valthorne.audio.SoundArea;
+import valthorne.audio.SoundData;
+import valthorne.audio.SoundPlayer;
 import valthorne.camera.PerspectiveCamera;
 import valthorne.examples.shared.FrameCapture;
 import valthorne.graphics.Color;

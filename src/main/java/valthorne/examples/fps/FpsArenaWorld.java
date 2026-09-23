@@ -11,8 +11,8 @@ import valthorne.graphics.Color;
 import valthorne.graphics.model.Material3D;
 import valthorne.graphics.model.Model3D;
 import valthorne.graphics.model.ModelBuilder3D;
-import valthorne.graphics.model.ModelInstance3D;
-import valthorne.graphics.model.Scene3D;
+import valthorne.graphics.scene.ModelInstance3D;
+import valthorne.graphics.scene.Scene3D;
 import valthorne.math.physics.*;
 
 import java.util.ArrayList;
